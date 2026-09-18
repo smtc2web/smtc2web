@@ -58,11 +58,6 @@
     "saved": "保存しました",
     "update": {
       "title": "設定を更新",
-      "source": {
-        "label": "更新ソース",
-        "official": "公式（Cloudflare）",
-        "hint": "GitHub または公式サイトから更新を取得するかを選択してください。中国本土では公式ソースの方が速いです。"
-      },
       "autoCheck": "起動時に更新を自動確認",
       "autoCheckHint": "アプリ起動時に新しいバージョンがないか自動的に確認します",
       "checkNow": "更新を確認",

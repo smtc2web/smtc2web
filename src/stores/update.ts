@@ -7,8 +7,6 @@ export interface UpdateCheckResult {
   current_version: string;
   latest_version: string;
   notes: string | null;
-  download_url: string | null;
-  source: string;
   error: string | null;
 }
 
@@ -38,8 +36,6 @@ export const useUpdateStore = defineStore("update", () => {
         current_version: "",
         latest_version: "",
         notes: null,
-        download_url: null,
-        source: "",
         error: String(e),
       };
       return lastResult.value;
@@ -50,14 +46,12 @@ export const useUpdateStore = defineStore("update", () => {
 
   async function downloadAndInstall(): Promise<void> {
     if (!hasTauri()) return;
-    if (!lastResult.value?.download_url) return;
+    if (!lastResult.value?.has_update) return;
     downloading.value = true;
     downloadError.value = null;
 
     try {
-      await tauriInvoke("start_update", {
-        downloadUrl: lastResult.value.download_url,
-      });
+      await tauriInvoke("start_update");
     } catch (e) {
       console.error("下载更新失败:", e);
       downloadError.value = String(e);

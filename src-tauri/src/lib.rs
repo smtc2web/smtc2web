@@ -482,7 +482,6 @@ struct ConfigDto {
     current_theme: String,
     locale: String,
     process_filter: String,
-    update_source: String,
     auto_check_update: bool,
     minimize_to_tray: bool,
     font_family: String,
@@ -498,7 +497,6 @@ async fn get_config() -> Result<ConfigDto, String> {
         current_theme: config.current_theme.clone(),
         locale: config.locale.clone(),
         process_filter: config.process_filter.clone(),
-        update_source: config.update_source.clone(),
         auto_check_update: config.auto_check_update,
         minimize_to_tray: config.minimize_to_tray,
         font_family: config.font_family.clone(),
@@ -515,7 +513,6 @@ async fn save_config(config_dto: ConfigDto) -> Result<(), String> {
     config.current_theme = config_dto.current_theme;
     config.locale = config_dto.locale;
     config.process_filter = config_dto.process_filter;
-    config.update_source = config_dto.update_source;
     config.auto_check_update = config_dto.auto_check_update;
     config.minimize_to_tray = config_dto.minimize_to_tray;
     config.font_family = config_dto.font_family;
@@ -690,6 +687,7 @@ pub fn run() {
 
     let port_clone = port;
     tauri::Builder::default()
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .invoke_handler(tauri::generate_handler![
             get_themes,
             get_current_theme,
@@ -715,6 +713,8 @@ pub fn run() {
             list_system_fonts
         ])
         .setup(move |app| {
+            app.manage(updater::PendingUpdate::default());
+
             {
                 let app_state = APP_STATE.lock().unwrap();
                 let config_guard = app_state.config.lock().unwrap();

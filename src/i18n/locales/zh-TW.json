@@ -58,11 +58,6 @@
     "saved": "已儲存",
     "update": {
       "title": "更新設定",
-      "source": {
-        "label": "更新來源",
-        "official": "官網 (Cloudflare)",
-        "hint": "選擇從 GitHub 或官網取得更新。官網來源在中國大陸存取更快。"
-      },
       "autoCheck": "啟動時自動檢查更新",
       "autoCheckHint": "應用程式啟動時自動檢查是否有新版本可用",
       "checkNow": "檢查更新",

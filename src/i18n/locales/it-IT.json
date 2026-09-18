@@ -58,11 +58,6 @@
     "saved": "Salvato",
     "update": {
       "title": "Aggiorna impostazioni",
-      "source": {
-        "label": "Sorgente di aggiornamento",
-        "official": "Ufficiale (Cloudflare)",
-        "hint": "Scegli se ricevere aggiornamenti da GitHub o dal sito ufficiale. La sorgente ufficiale è più veloce nella Cina continentale."
-      },
       "autoCheck": "Controlla automaticamente gli aggiornamenti all'avvio",
       "autoCheckHint": "Controlla automaticamente la disponibilità di nuove versioni all'avvio dell'app",
       "checkNow": "Controlla aggiornamenti",

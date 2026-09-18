@@ -58,11 +58,6 @@
     "saved": "보존됨",
     "update": {
       "title": "설정 갱신",
-      "source": {
-        "label": "갱신 원천",
-        "official": "공식 (Cloudflare)",
-        "hint": "GitHub 또는 공식 누리집에서 갱신을 가져올지 선택하십시오. 중국 본토에서는 공식 원천이 더 빠릅니다."
-      },
       "autoCheck": "시작할 때 자동으로 갱신 확인",
       "autoCheckHint": "프로그람이 시작될 때 새 판이 있는지 자동으로 확인합니다",
       "checkNow": "지금 갱신 확인",

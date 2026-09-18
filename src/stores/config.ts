@@ -10,7 +10,6 @@ export const useConfigStore = defineStore("config", () => {
     current_theme: "",
     locale: "zh-CN",
     process_filter: "*",
-    update_source: "github",
     auto_check_update: true,
     minimize_to_tray: false,
     font_family:

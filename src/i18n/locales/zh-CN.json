@@ -58,11 +58,6 @@
     "saved": "已保存",
     "update": {
       "title": "更新设置",
-      "source": {
-        "label": "更新源",
-        "official": "官网 (Cloudflare)",
-        "hint": "选择从 GitHub 或官网获取更新。官网源在中国大陆访问更快。"
-      },
       "autoCheck": "启动时自动检查更新",
       "autoCheckHint": "应用启动时自动检查是否有新版本可用",
       "checkNow": "检查更新",

@@ -58,11 +58,6 @@
     "saved": "Enregistré",
     "update": {
       "title": "Mettre à jour les paramètres",
-      "source": {
-        "label": "Source de mise à jour",
-        "official": "Officiel (Cloudflare)",
-        "hint": "Choisissez de récupérer les mises à jour depuis GitHub ou le site officiel. La source officielle est plus rapide en Chine continentale."
-      },
       "autoCheck": "Vérifier automatiquement les mises à jour au démarrage",
       "autoCheckHint": "Rechercher automatiquement les nouvelles versions au démarrage de l'application",
       "checkNow": "Rechercher les mises à jour",

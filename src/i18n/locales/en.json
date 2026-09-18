@@ -58,11 +58,6 @@
     "saved": "Saved",
     "update": {
       "title": "Update Settings",
-      "source": {
-        "label": "Update Source",
-        "official": "Official (Cloudflare)",
-        "hint": "Choose whether to fetch updates from GitHub or the official website. The official source is faster in mainland China."
-      },
       "autoCheck": "Automatically check for updates on startup",
       "autoCheckHint": "Check for new versions automatically when the app starts",
       "checkNow": "Check for Updates",

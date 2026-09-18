@@ -58,11 +58,6 @@
     "saved": "Opgeslagen",
     "update": {
       "title": "Instellingen bijwerken",
-      "source": {
-        "label": "Updatebron",
-        "official": "Officieel (Cloudflare)",
-        "hint": "Kies of u updates van GitHub of de officiële website wilt ophalen. De officiële bron is sneller in China."
-      },
       "autoCheck": "Automatisch controleren op updates bij start",
       "autoCheckHint": "Automatisch controleren op nieuwe versies wanneer de app start",
       "checkNow": "Controleren op updates",

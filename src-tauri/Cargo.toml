@@ -1,9 +1,9 @@
 [package]
-authors = ["AkarinLiu"]
-description = "A Tauri App"
+authors = ["smtc2web Contributors"]
+description = "An software can let OBS show playing media."
 edition = "2024"
 name = "smtc2web"
-version = "0.6.4"
+version = "0.6.5"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -43,6 +43,7 @@ zip = "0.6"
 
 clap = { version = "4", features = ["derive"] }
 reqwest = { version = "0.12", features = ["json"] }
+tauri-plugin-updater = "2"
 ttf-parser = "0.25"
 tokio-stream = { version = "0.1", features = ["sync"] }
 

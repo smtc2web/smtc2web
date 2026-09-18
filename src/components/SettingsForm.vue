@@ -52,20 +52,6 @@
             <h3 class="section-title">{{ t("settings.update.title") }}</h3>
 
             <div class="form-group">
-                <label>{{ t("settings.update.source.label") }}</label>
-                <select
-                    v-model="localConfig.update_source"
-                    class="form-input select-trigger"
-                >
-                    <option value="github">GitHub</option>
-                    <option value="official">
-                        {{ t("settings.update.source.official") }}
-                    </option>
-                </select>
-                <p class="hint">{{ t("settings.update.source.hint") }}</p>
-            </div>
-
-            <div class="form-group">
                 <label class="checkbox-label">
                     <CheckboxRoot
                         v-model="localConfig.auto_check_update"
@@ -345,18 +331,6 @@ onMounted(() => {
 .checkbox-indicator {
   display: flex;
   font-size: 12px;
-}
-
-.select-trigger {
-  appearance: none;
-  -webkit-appearance: none;
-  width: 100%;
-  padding-right: 32px;
-  cursor: pointer;
-  text-align: left;
-  background-image: var(--ui-select-chevron);
-  background-repeat: no-repeat;
-  background-position: right 12px center;
 }
 
 .hint {

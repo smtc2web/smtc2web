@@ -58,11 +58,6 @@
     "saved": "저장됨",
     "update": {
       "title": "설정 업데이트",
-      "source": {
-        "label": "업데이트 소스",
-        "official": "공식 (Cloudflare)",
-        "hint": "GitHub 또는 공식 사이트에서 업데이트를 받을지 선택하세요. 중국 본토에서는 공식 소스가 더 빠릅니다."
-      },
       "autoCheck": "시작 시 업데이트 자동 확인",
       "autoCheckHint": "앱 시작 시 새 버전이 있는지 자동으로 확인합니다",
       "checkNow": "업데이트 확인",
