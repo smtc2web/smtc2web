@@ -112,7 +112,7 @@ jobs:
           TAG="${GITHUB_REF_NAME}"
           VERSION="${TAG#v}"
 
-          gh release download "$TAG" --repo "${{ github.repository }}" --pattern "*.sig" -D ./sigs 2>/dev/null || true
+          gh release download "$TAG" --repo "${{ github.repository }}" -D ./release-assets --clobber
 
           node -e "
           const fs = require('fs');
@@ -135,7 +135,7 @@ jobs:
           ];
 
           for (const entry of entries) {
-            const sigPath = './sigs/' + entry.installer + '.sig';
+            const sigPath = './release-assets/' + entry.installer + '.sig';
             if (!fs.existsSync(sigPath)) continue;
             const signature = fs.readFileSync(sigPath, 'utf-8').trim();
             const url = 'https://github.com/' + repo + '/releases/download/' + tag + '/' + entry.installer;
@@ -144,13 +144,35 @@ jobs:
             }
           }
 
-          fs.writeFileSync('latest.json', JSON.stringify(manifest, null, 2));
+          fs.writeFileSync('./release-assets/latest.json', JSON.stringify(manifest, null, 2));
           "
 
-          gh release upload "$TAG" --repo "${{ github.repository }}" latest.json --clobber
+          gh release upload "$TAG" --repo "${{ github.repository }}" ./release-assets/latest.json --clobber
 
-      - name: Upload latest.json to Cloudflare R2
+      - name: Upload release assets to Cloudflare R2
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        run: npx --yes wrangler@latest r2 object put "${{ vars.R2_BUCKET }}/latest.json" --file=./latest.json --content-type=application/json --remote
+        run: |
+          R2_URL="${{ vars.R2_PUBLIC_URL || 'https://download.smtc2web.org' }}"
+
+          node -e "
+          const fs = require('fs');
+          const path = './release-assets/latest.json';
+          const manifest = JSON.parse(fs.readFileSync(path, 'utf-8'));
+          for (const key of Object.keys(manifest.platforms)) {
+            const url = manifest.platforms[key].url;
+            manifest.platforms[key].url = '$R2_URL' + '/' + url.substring(url.lastIndexOf('/') + 1);
+          }
+          fs.writeFileSync(path, JSON.stringify(manifest, null, 2));
+          "
+
+          for f in ./release-assets/*; do
+            name="$(basename "$f")"
+            case "$name" in
+              *.json) ct="application/json" ;;
+              *.sig) ct="text/plain" ;;
+              *) ct="application/octet-stream" ;;
+            esac
+            npx --yes wrangler@latest r2 object put "${{ vars.R2_BUCKET }}/$name" --file="$f" --content-type="$ct" --remote
+          done
