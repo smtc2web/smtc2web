@@ -153,8 +153,14 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          R2_BUCKET: ${{ vars.R2_BUCKET || secrets.R2_BUCKET }}
         run: |
           R2_URL="${{ vars.R2_PUBLIC_URL || 'https://download.smtc2web.org' }}"
+
+          if [ -z "$R2_BUCKET" ]; then
+            echo "::error::R2_BUCKET is empty, set repository variable or secret R2_BUCKET"
+            exit 1
+          fi
 
           node -e "
           const fs = require('fs');
@@ -174,5 +180,5 @@ jobs:
               *.sig) ct="text/plain" ;;
               *) ct="application/octet-stream" ;;
             esac
-            npx --yes wrangler@latest r2 object put "${{ vars.R2_BUCKET }}/$name" --file="$f" --content-type="$ct" --remote
+            npx --yes wrangler@latest r2 object put "$R2_BUCKET/$name" --file="$f" --content-type="$ct" --remote
           done
