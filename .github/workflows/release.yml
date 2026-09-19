@@ -156,7 +156,7 @@ jobs:
           R2_BUCKET: ${{ vars.R2_BUCKET || secrets.R2_BUCKET }}
         run: |
           R2_URL="${{ vars.R2_PUBLIC_URL || 'https://download.smtc2web.org' }}"
-          VERSION="${GITHUB_REF_NAME#v}"
+          VERSION="${GITHUB_REF_NAME}"
 
           if [ -z "$R2_BUCKET" ]; then
             echo "::error::R2_BUCKET is empty, set repository variable or secret R2_BUCKET"
