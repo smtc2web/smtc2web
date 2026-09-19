@@ -131,7 +131,7 @@ jobs:
             { installer: 'smtc2web_' + version + '_x64-setup.exe', keys: ['windows-x86_64', 'windows-x86_64-nsis'] },
             { installer: 'smtc2web_' + version + '_arm64-setup.exe', keys: ['windows-aarch64', 'windows-aarch64-nsis'] },
             { installer: 'smtc2web_' + version + '_amd64.deb', keys: ['linux-x86_64', 'linux-x86_64-deb'] },
-            { installer: 'smtc2web_' + version + '_x86_64.rpm', keys: ['linux-x86_64-rpm'] },
+            { installer: 'smtc2web-' + version + '-1.x86_64.rpm', keys: ['linux-x86_64-rpm'] },
           ];
 
           for (const entry of entries) {

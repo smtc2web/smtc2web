@@ -131,7 +131,7 @@ jobs:
             { installer: 'smtc2web_' + version + '_x64-setup.exe', keys: ['windows-x86_64', 'windows-x86_64-nsis'] },
             { installer: 'smtc2web_' + version + '_arm64-setup.exe', keys: ['windows-aarch64', 'windows-aarch64-nsis'] },
             { installer: 'smtc2web_' + version + '_amd64.deb', keys: ['linux-x86_64', 'linux-x86_64-deb'] },
-            { installer: 'smtc2web_' + version + '_x86_64.rpm', keys: ['linux-x86_64-rpm'] },
+            { installer: 'smtc2web-' + version + '-1.x86_64.rpm', keys: ['linux-x86_64-rpm'] },
           ];
 
           for (const entry of entries) {
@@ -156,6 +156,7 @@ jobs:
           R2_BUCKET: ${{ vars.R2_BUCKET || secrets.R2_BUCKET }}
         run: |
           R2_URL="${{ vars.R2_PUBLIC_URL || 'https://download.smtc2web.org' }}"
+          VERSION="${GITHUB_REF_NAME#v}"
 
           if [ -z "$R2_BUCKET" ]; then
             echo "::error::R2_BUCKET is empty, set repository variable or secret R2_BUCKET"
@@ -168,7 +169,7 @@ jobs:
           const manifest = JSON.parse(fs.readFileSync(path, 'utf-8'));
           for (const key of Object.keys(manifest.platforms)) {
             const url = manifest.platforms[key].url;
-            manifest.platforms[key].url = '$R2_URL' + '/' + url.substring(url.lastIndexOf('/') + 1);
+            manifest.platforms[key].url = '$R2_URL/$VERSION/' + url.substring(url.lastIndexOf('/') + 1);
           }
           fs.writeFileSync(path, JSON.stringify(manifest, null, 2));
           "
@@ -180,5 +181,10 @@ jobs:
               *.sig) ct="text/plain" ;;
               *) ct="application/octet-stream" ;;
             esac
-            npx --yes wrangler@latest r2 object put "$R2_BUCKET/$name" --file="$f" --content-type="$ct" --remote
+            if [ "$name" = "latest.json" ]; then
+              key="$name"
+            else
+              key="$VERSION/$name"
+            fi
+            npx --yes wrangler@latest r2 object put "$R2_BUCKET/$key" --file="$f" --content-type="$ct" --remote
           done
