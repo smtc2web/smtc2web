@@ -68,7 +68,9 @@
     "system": {
       "title": "Paramètres système",
       "minimizeToTray": "Réduire dans la barre d'état système au démarrage",
-      "minimizeToTrayHint": "Démarrer l'application réduite dans la barre d'état système sans afficher la fenêtre principale"
+      "minimizeToTrayHint": "Démarrer l'application réduite dans la barre d'état système sans afficher la fenêtre principale",
+      "lightweightMode": "Mode léger",
+      "lightweightModeHint": "Détruit l'interface à la fermeture de la fenêtre pour libérer la mémoire, en ne gardant que le service en arrière-plan ; la réouverture recharge l'interface"
     },
     "appearance": {
       "title": "Apparence",

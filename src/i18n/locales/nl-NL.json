@@ -68,7 +68,9 @@
     "system": {
       "title": "Systeeminstellingen",
       "minimizeToTray": "Minimaliseren naar systeemvak bij start",
-      "minimizeToTrayHint": "Start de app geminimaliseerd in het systeemvak zonder het hoofdvenster te tonen"
+      "minimizeToTrayHint": "Start de app geminimaliseerd in het systeemvak zonder het hoofdvenster te tonen",
+      "lightweightMode": "Lichte modus",
+      "lightweightModeHint": "Vernietigt de interface bij het sluiten van het venster om geheugen vrij te maken en behoudt alleen de achtergrondservice; bij heropenen wordt de interface opnieuw geladen"
     },
     "appearance": {
       "title": "Weergave",

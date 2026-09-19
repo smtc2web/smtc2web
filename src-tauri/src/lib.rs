@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use std::net::IpAddr;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex, RwLock};
-use tauri::Manager;
+use tauri::{Manager, Runtime, WebviewWindow, WebviewWindowBuilder};
 use tokio::sync::oneshot;
 use warp::Filter;
 
@@ -484,6 +484,7 @@ struct ConfigDto {
     process_filter: String,
     auto_check_update: bool,
     minimize_to_tray: bool,
+    lightweight_mode: bool,
     font_family: String,
 }
 
@@ -499,6 +500,7 @@ async fn get_config() -> Result<ConfigDto, String> {
         process_filter: config.process_filter.clone(),
         auto_check_update: config.auto_check_update,
         minimize_to_tray: config.minimize_to_tray,
+        lightweight_mode: config.lightweight_mode,
         font_family: config.font_family.clone(),
     })
 }
@@ -515,6 +517,7 @@ async fn save_config(config_dto: ConfigDto) -> Result<(), String> {
     config.process_filter = config_dto.process_filter;
     config.auto_check_update = config_dto.auto_check_update;
     config.minimize_to_tray = config_dto.minimize_to_tray;
+    config.lightweight_mode = config_dto.lightweight_mode;
     config.font_family = config_dto.font_family;
 
     config.save().map_err(|e| e.to_string())
@@ -605,7 +608,7 @@ async fn list_system_fonts() -> Result<Vec<String>, String> {
 
 /// Windows 11 圆角适配：通过 DWM API 为无边框窗口启用原生圆角
 #[cfg(target_os = "windows")]
-fn apply_window_rounded_corners(window: &tauri::WebviewWindow) {
+fn apply_window_rounded_corners<R: Runtime>(window: &WebviewWindow<R>) {
     // ponytail: raw FFI to avoid windows crate version conflict with Tauri's bundled windows crate
     unsafe extern "system" {
         fn DwmSetWindowAttribute(
@@ -628,6 +631,49 @@ fn apply_window_rounded_corners(window: &tauri::WebviewWindow) {
                 std::mem::size_of::<u32>() as u32,
             );
         }
+    }
+}
+
+/// 统一窗口关闭行为：轻量模式销毁窗口以释放 WebView 内存，否则隐藏到托盘。
+fn attach_close_behavior<R: Runtime>(window: &WebviewWindow<R>) {
+    let window_clone = window.clone();
+    window.on_window_event(move |event| {
+        if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+            let lightweight = APP_STATE
+                .lock()
+                .ok()
+                .and_then(|state| state.config.lock().ok().map(|c| c.lightweight_mode))
+                .unwrap_or(false);
+
+            if !lightweight {
+                api.prevent_close();
+                let _ = window_clone.hide();
+            }
+        }
+    });
+}
+
+/// 显示主窗口；若轻量模式下窗口已被销毁，则按 tauri.conf 配置重建。
+pub fn show_main_window<R: Runtime>(app: &tauri::AppHandle<R>) {
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.unminimize();
+        let _ = window.show();
+        let _ = window.set_focus();
+        return;
+    }
+
+    let Some(config) = app.config().app.windows.first().cloned() else {
+        log_error!("找不到主窗口配置，无法重建窗口");
+        return;
+    };
+
+    match WebviewWindowBuilder::from_config(app, &config).and_then(|b| b.build()) {
+        Ok(window) => {
+            #[cfg(target_os = "windows")]
+            apply_window_rounded_corners(&window);
+            attach_close_behavior(&window);
+        }
+        Err(e) => log_error!("重建主窗口失败: {}", e),
     }
 }
 
@@ -734,29 +780,37 @@ pub fn run() {
             #[cfg(target_os = "windows")]
             apply_window_rounded_corners(&window);
 
-            let window_clone = window.clone();
-            window.on_window_event(move |event| {
-                if let tauri::WindowEvent::CloseRequested { api, .. } = event {
-                    api.prevent_close();
-                    let _ = window_clone.hide();
-                }
-            });
-
-            // 启动时最小化至托盘（由配置 minimize_to_tray 控制）
-            let minimize_to_tray = {
+            let (minimize_to_tray, lightweight_mode) = {
                 let app_state = APP_STATE.lock().unwrap();
                 let config_guard = app_state.config.lock().unwrap();
-                config_guard.minimize_to_tray
+                (config_guard.minimize_to_tray, config_guard.lightweight_mode)
             };
-            if minimize_to_tray {
-                log_info!("启动时最小化至系统托盘");
-                let _ = window.hide();
+
+            if minimize_to_tray && lightweight_mode {
+                // 轻量模式：启动即销毁窗口，不保留 WebView 内存，仅驻留托盘
+                log_info!("轻量模式：启动时销毁窗口，仅保留后台进程");
+                let _ = window.destroy();
+            } else {
+                attach_close_behavior(&window);
+
+                // 启动时最小化至托盘（由配置 minimize_to_tray 控制）
+                if minimize_to_tray {
+                    log_info!("启动时最小化至系统托盘");
+                    let _ = window.hide();
+                }
             }
 
             Ok(())
         })
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application")
+        .run(|_app_handle, event| {
+            // 轻量模式销毁最后一个窗口时会请求退出；拦截以继续驻留托盘。
+            // code 为 Some 的是 app.exit()/restart() 等主动退出，需放行。
+            if let tauri::RunEvent::ExitRequested { code: None, api, .. } = event {
+                api.prevent_exit();
+            }
+        });
 
     runtime.block_on(async {
         let _ = server_handle.await;

@@ -68,7 +68,9 @@
     "system": {
       "title": "系统设置",
       "minimizeToTray": "启动时最小化至托盘",
-      "minimizeToTrayHint": "应用启动后直接最小化到系统托盘，不显示主窗口"
+      "minimizeToTrayHint": "应用启动后直接最小化到系统托盘，不显示主窗口",
+      "lightweightMode": "轻量模式",
+      "lightweightModeHint": "关闭窗口时销毁界面以释放内存，仅保留后台服务；重新打开需重新加载界面"
     },
     "appearance": {
       "title": "外观",

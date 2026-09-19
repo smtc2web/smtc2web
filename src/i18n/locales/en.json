@@ -68,7 +68,9 @@
     "system": {
       "title": "System Settings",
       "minimizeToTray": "Minimize to tray on startup",
-      "minimizeToTrayHint": "Start the app minimized to the system tray without showing the main window"
+      "minimizeToTrayHint": "Start the app minimized to the system tray without showing the main window",
+      "lightweightMode": "Lightweight mode",
+      "lightweightModeHint": "Destroy the interface when the window is closed to free memory, keeping only the background service; reopening reloads the interface"
     },
     "appearance": {
       "title": "Appearance",

@@ -68,7 +68,9 @@
     "system": {
       "title": "시스템 설정",
       "minimizeToTray": "시작 시 트레이로 최소화",
-      "minimizeToTrayHint": "앱 시작 후 메인 창을 표시하지 않고 시스템 트레이로 최소화합니다"
+      "minimizeToTrayHint": "앱 시작 후 메인 창을 표시하지 않고 시스템 트레이로 최소화합니다",
+      "lightweightMode": "경량 모드",
+      "lightweightModeHint": "창을 닫으면 인터페이스를 파기하여 메모리를 절약하고 백그라운드 서비스만 유지합니다. 다시 열면 인터페이스를 다시 불러옵니다"
     },
     "appearance": {
       "title": "모양",

@@ -68,7 +68,9 @@
     "system": {
       "title": "システム設定",
       "minimizeToTray": "起動時にトレイに最小化",
-      "minimizeToTrayHint": "アプリ起動後、メインウィンドウを表示せずにシステムトレイに最小化します"
+      "minimizeToTrayHint": "アプリ起動後、メインウィンドウを表示せずにシステムトレイに最小化します",
+      "lightweightMode": "軽量モード",
+      "lightweightModeHint": "ウィンドウを閉じるとインターフェースを破棄してメモリを解放し、バックグラウンドサービスのみを残します。再度開くときは再読み込みします"
     },
     "appearance": {
       "title": "外観",

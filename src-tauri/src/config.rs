@@ -29,6 +29,8 @@ pub struct Config {
     pub auto_check_update: bool,
     /// 启动时最小化至系统托盘
     pub minimize_to_tray: bool,
+    /// 轻量模式：关闭窗口时销毁 WebView，仅保留后台进程
+    pub lightweight_mode: bool,
     /// 主题 overlay 使用的字体
     pub font_family: String,
     /// 通过 Git 安装的主题信息（key = folder_name）
@@ -45,6 +47,7 @@ impl Default for Config {
             process_filter: "*".to_string(),
             auto_check_update: true,
             minimize_to_tray: false,
+            lightweight_mode: false,
             font_family: "-apple-system, BlinkMacSystemFont, \"Segoe UI\", \"Microsoft YaHei\", \"PingFang SC\", \"Hiragino Sans GB\", sans-serif"
                 .to_string(),
             git_themes: HashMap::new(),

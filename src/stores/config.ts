@@ -12,6 +12,7 @@ export const useConfigStore = defineStore("config", () => {
     process_filter: "*",
     auto_check_update: true,
     minimize_to_tray: false,
+    lightweight_mode: false,
     font_family:
       '-apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", "PingFang SC", "Hiragino Sans GB", sans-serif',
   });

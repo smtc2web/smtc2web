@@ -68,7 +68,9 @@
     "system": {
       "title": "Impostazioni di sistema",
       "minimizeToTray": "Riduci a icona nella barra di sistema all'avvio",
-      "minimizeToTrayHint": "Avvia l'app ridotta a icona nella barra di sistema senza mostrare la finestra principale"
+      "minimizeToTrayHint": "Avvia l'app ridotta a icona nella barra di sistema senza mostrare la finestra principale",
+      "lightweightMode": "Modalità leggera",
+      "lightweightModeHint": "Distrugge l'interfaccia alla chiusura della finestra per liberare memoria, mantenendo solo il servizio in background; la riapertura ricarica l'interfaccia"
     },
     "appearance": {
       "title": "Aspetto",

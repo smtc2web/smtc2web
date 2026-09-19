@@ -68,7 +68,9 @@
     "system": {
       "title": "Systemeinstellungen",
       "minimizeToTray": "Beim Start in die Taskleiste minimieren",
-      "minimizeToTrayHint": "Beim Start direkt in die System-Taskleiste minimieren, ohne das Hauptfenster anzuzeigen"
+      "minimizeToTrayHint": "Beim Start direkt in die System-Taskleiste minimieren, ohne das Hauptfenster anzuzeigen",
+      "lightweightMode": "Leichtmodus",
+      "lightweightModeHint": "Beim Schließen des Fensters wird die Oberfläche zerstört, um Speicher freizugeben; nur der Hintergrunddienst bleibt aktiv. Beim erneuten Öffnen wird die Oberfläche neu geladen"
     },
     "appearance": {
       "title": "Erscheinungsbild",

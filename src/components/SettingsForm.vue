@@ -107,6 +107,21 @@
                 </label>
                 <p class="hint">{{ t("settings.system.minimizeToTrayHint") }}</p>
             </div>
+
+            <div class="form-group">
+                <label class="checkbox-label">
+                    <CheckboxRoot
+                        v-model="localConfig.lightweight_mode"
+                        class="checkbox-box"
+                    >
+                        <CheckboxIndicator class="checkbox-indicator">
+                            <font-awesome-icon icon="check" />
+                        </CheckboxIndicator>
+                    </CheckboxRoot>
+                    <span>{{ t("settings.system.lightweightMode") }}</span>
+                </label>
+                <p class="hint">{{ t("settings.system.lightweightModeHint") }}</p>
+            </div>
         </div>
 
         <!-- 外观设置 -->

@@ -4,7 +4,7 @@ use std::process;
 use std::sync::Mutex;
 use tauri::menu::{Menu, MenuItem};
 use tauri::tray::{TrayIconBuilder, TrayIconEvent};
-use tauri::{AppHandle, Emitter, Manager, Runtime};
+use tauri::{AppHandle, Emitter, Runtime};
 
 /// 全局端口存储，用于重建菜单
 static TRAY_PORT: std::sync::LazyLock<Mutex<u16>> = std::sync::LazyLock::new(|| Mutex::new(3030));
@@ -44,14 +44,6 @@ pub fn create_tray_menu<R: Runtime>(app: &AppHandle<R>) -> Menu<R> {
     Menu::with_items(app, &[&show_window, &open_web, &check_update, &quit]).unwrap()
 }
 
-/// 显示窗口
-fn show_window<R: Runtime>(app: &AppHandle<R>) {
-    if let Some(window) = app.get_webview_window("main") {
-        let _: Result<(), _> = window.show();
-        let _: Result<(), _> = window.set_focus();
-    }
-}
-
 /// 处理托盘菜单事件
 pub fn handle_tray_menu_event<R: Runtime>(
     app: &AppHandle<R>,
@@ -60,7 +52,7 @@ pub fn handle_tray_menu_event<R: Runtime>(
 ) {
     match event.id.as_ref() {
         "show_window" => {
-            show_window(app);
+            crate::show_main_window(app);
         }
         "open_web" => {
             let url = format!("http://localhost:{}", port);
@@ -81,7 +73,7 @@ pub fn handle_tray_menu_event<R: Runtime>(
 /// 处理托盘图标事件（双击显示窗口）
 fn handle_tray_icon_event<R: Runtime>(app: &AppHandle<R>, event: TrayIconEvent) {
     if let TrayIconEvent::DoubleClick { .. } = event {
-        show_window(app);
+        crate::show_main_window(app);
     }
 }
 

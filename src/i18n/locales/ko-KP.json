@@ -68,7 +68,9 @@
     "system": {
       "title": "체계 설정",
       "minimizeToTray": "시작할 때 알림 영역으로 최소화",
-      "minimizeToTrayHint": "프로그람 시작 후 기본 창을 보이지 않고 알림 영역으로 최소화합니다"
+      "minimizeToTrayHint": "프로그람 시작 후 기본 창을 보이지 않고 알림 영역으로 최소화합니다",
+      "lightweightMode": "경량 모드",
+      "lightweightModeHint": "창을 닫으면 인터페스를 없애여 메모리를 줄이고 배경봉사만 남깁니다. 다시 열면 인터페스를 다시 불러옵니다"
     },
     "appearance": {
       "title": "모양",
