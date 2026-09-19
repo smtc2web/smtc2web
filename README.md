@@ -1,9 +1,9 @@
 # smtc2web
 
-[![Version](https://img.shields.io/github/v/release/AkarinLiu/smtc2web?color=blue&label=Version)](https://github.com/AkarinLiu/smtc2web/releases)
+[![Version](https://img.shields.io/github/v/release/AkarinLiu/smtc2web?color=blue&label=Version)](https://github.com/smtc2web/smtc2web/releases)
 [![License](https://img.shields.io/badge/License-MIT-green)](./LICENSE)
-![Downloads](https://img.shields.io/github/downloads/AkarinLiu/smtc2web/total)
-[![Stars](https://img.shields.io/github/stars/AkarinLiu/smtc2web?style=social&label=Stars)](https://github.com/AkarinLiu/smtc2web)
+![Downloads](https://img.shields.io/github/downloads/smtc2web/smtc2web/total)
+[![Stars](https://img.shields.io/github/stars/AkarinLiu/smtc2web?style=social&label=Stars)](https://github.com/smtc2web/smtc2web)
 
 
 [![Rust](https://img.shields.io/badge/Rust-2024--edition-E5732E?logo=rust&logoColor=white)](https://www.rust-lang.org/)
