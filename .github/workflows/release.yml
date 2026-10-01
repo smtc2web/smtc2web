@@ -97,6 +97,7 @@ jobs:
           releaseName: "v__VERSION__"
           releaseDraft: false
           prerelease: false
+          releaseBody: "See Changelog from Blog: https://smtc2web.org/posts/v__VERSION__"
           args: --target ${{ matrix.target }}
 
   finalize:

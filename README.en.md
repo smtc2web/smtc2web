@@ -13,12 +13,11 @@
 [![Windows](https://img.shields.io/badge/Windows-%2311d0f5?logo=windows&logoColor=white)]()
 [![Linux](https://img.shields.io/badge/Linux-%23ccc?logo=linux&logoColor=black)]()
 
-
  A base of Rust's smtc2web achieve, Using in Live Stream Software show Playing Music.
 
 **LinuxDO Reference Post:** https://linux.do/t/topic/937994
 
-**[Join Translate](https://crowdin.com/project/smtc2web)** **[中文](./README.md)**
+**[中文](./README.md)**
 
 ![OBS Connect to smtc2web Screenshot](./screenshot.png)
 
@@ -26,7 +25,7 @@
 
 <img src="./src-tauri/icons/icon.png" alt="图标" width="64" height="64">
 
-## Recommand IDE Setup 
+## Recommand IDE Setup
 
 - [VS Code](https://code.visualstudio.com/) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)
 - [TRAE](https://trae.com.cn/) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)
@@ -43,20 +42,25 @@ Players installed via Snap or Flatpak (e.g. Firefox, Spotify) are sandboxed by d
 #### Snap
 
 1. List installed Snap packages:
+
    ```bash
    snap list
    ```
 
 2. Connect the `dbus` interface (using Firefox as an example):
+
    ```bash
    sudo snap connect firefox:dbus-daemon
    ```
+
    > If the `dbus-daemon` interface is not available, try:
+   >
    > ```bash
    > sudo snap connect firefox:session-dbus-observing
    > ```
 
 3. Verify the interface is connected:
+
    ```bash
    snap connections firefox | grep dbus
    ```
@@ -66,12 +70,15 @@ Players installed via Snap or Flatpak (e.g. Firefox, Spotify) are sandboxed by d
 #### Flatpak
 
 1. Using Flatseal (GUI, recommended):
+
    ```bash
    flatpak install flathub com.github.tchx84.Flatseal
    ```
+
    Open Flatseal → select the target player → under **System Bus** or **Session Bus**, add `org.mpris.MediaPlayer2.*`.
 
 2. Or override permissions via command line (using Firefox as an example):
+
    ```bash
    sudo flatpak override --socket=session-bus org.mozilla.firefox
    ```
