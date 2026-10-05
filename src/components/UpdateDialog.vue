@@ -44,6 +44,17 @@
               <h4>{{ t('update.releaseNotes') }}</h4>
               <p>{{ lastResult.notes }}</p>
             </div>
+
+            <!-- 下载进度 -->
+            <div v-if="updateStore.downloading" class="download-progress">
+              <div class="progress-track">
+                <div
+                  class="progress-fill"
+                  :style="{ width: progressPercent + '%' }"
+                ></div>
+              </div>
+              <p class="progress-text">{{ progressText }}</p>
+            </div>
           </div>
         </div>
 
@@ -88,6 +99,27 @@ const updateStore = useUpdateStore()
 
 const lastResult = computed(() => updateStore.lastResult)
 
+const progressPercent = computed(() =>
+  Math.min(100, Math.max(0, updateStore.progress?.percent ?? 0)),
+)
+
+function formatSize(bytes: number): string {
+  return (bytes / 1024 / 1024).toFixed(1)
+}
+
+const progressText = computed(() => {
+  const p = updateStore.progress
+  if (!p) return t('update.downloading')
+  if (p.total && p.percent != null) {
+    return t('update.downloadProgress', {
+      percent: p.percent.toFixed(1),
+      downloaded: formatSize(p.downloaded),
+      total: formatSize(p.total),
+    })
+  }
+  return t('update.downloading')
+})
+
 const open = computed({
   get: () => updateStore.showDialog,
   set: (v: boolean) => {
@@ -117,11 +149,11 @@ async function handleDownload() {
 }
 
 .dialog-overlay[data-state='open'] {
-  animation: dialog-fade-in 0.2s ease;
+  animation: dialog-overlay-in 0.2s ease;
 }
 
 .dialog-overlay[data-state='closed'] {
-  animation: dialog-fade-out 0.2s ease;
+  animation: dialog-overlay-out 0.16s ease-in forwards;
 }
 
 .dialog-content {
@@ -140,11 +172,11 @@ async function handleDownload() {
 }
 
 .dialog-content[data-state='open'] {
-  animation: dialog-fade-in 0.2s ease;
+  animation: dialog-content-in 0.26s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .dialog-content[data-state='closed'] {
-  animation: dialog-fade-out 0.2s ease;
+  animation: dialog-content-out 0.16s ease-in forwards;
 }
 
 .dialog-header {
@@ -221,6 +253,44 @@ async function handleDownload() {
   color: var(--ui-text-primary);
 }
 
+.download-progress {
+  margin-top: var(--ui-space-md);
+  animation: progress-in 0.25s ease;
+}
+
+@keyframes progress-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.progress-track {
+  width: 100%;
+  height: 8px;
+  background: var(--ui-bg-tertiary);
+  border-radius: var(--ui-radius-sm);
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--ui-accent);
+  border-radius: var(--ui-radius-sm);
+  transition: width var(--ui-transition-normal);
+}
+
+.progress-text {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--ui-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
 .dialog-footer {
   display: flex;
   gap: var(--ui-space-sm);
@@ -264,7 +334,7 @@ async function handleDownload() {
   cursor: not-allowed;
 }
 
-@keyframes dialog-fade-in {
+@keyframes dialog-overlay-in {
   from {
     opacity: 0;
   }
@@ -273,12 +343,42 @@ async function handleDownload() {
   }
 }
 
-@keyframes dialog-fade-out {
+@keyframes dialog-overlay-out {
   from {
     opacity: 1;
   }
   to {
     opacity: 0;
+  }
+}
+
+@keyframes dialog-content-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes dialog-content-out {
+  from {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.96);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dialog-overlay,
+  .dialog-content,
+  .download-progress {
+    animation: none !important;
   }
 }
 </style>

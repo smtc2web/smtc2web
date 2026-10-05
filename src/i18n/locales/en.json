@@ -81,6 +81,12 @@
         "scanning": "Scanning system fonts...",
         "scanningHint": "Detecting installed fonts, please wait..."
       }
+    },
+    "serverUrl": {
+      "label": "Access URL",
+      "hint": "Copy this address into an OBS Browser Source to show the now-playing info.",
+      "copy": "Copy",
+      "copied": "Copied"
     }
   },
   "update": {
@@ -94,7 +100,8 @@
     "noUpdate": "Already up to date",
     "installPrompt": "Update downloaded. Restart now to install?",
     "downloadError": "Download failed",
-    "releaseNotes": "Release Notes"
+    "releaseNotes": "Release Notes",
+    "downloadProgress": "{downloaded} MB / {total} MB ({percent}%)"
   },
   "common": {
     "loading": "Loading...",

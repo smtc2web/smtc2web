@@ -81,6 +81,12 @@
         "scanning": "Scansione dei font di sistema...",
         "scanningHint": "Rilevamento dei font installati, attendere..."
       }
+    },
+    "serverUrl": {
+      "label": "Indirizzo di accesso",
+      "hint": "Copia questo indirizzo in una sorgente browser di OBS per mostrare le informazioni in riproduzione.",
+      "copy": "Copia",
+      "copied": "Copiato"
     }
   },
   "update": {
@@ -94,7 +100,8 @@
     "noUpdate": "Già aggiornato",
     "installPrompt": "Aggiornamento scaricato. Riavviare ora per installare?",
     "downloadError": "Download non riuscito",
-    "releaseNotes": "Note di rilascio"
+    "releaseNotes": "Note di rilascio",
+    "downloadProgress": "{downloaded} MB / {total} MB ({percent}%)"
   },
   "common": {
     "loading": "Caricamento...",

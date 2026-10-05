@@ -3,16 +3,3 @@ show_window = "Fenster anzeigen"
 open_web = "Web öffnen"
 check_update = "Nach Updates suchen"
 quit = "Beenden"
-
-[cli]
-about = "SMTC to Web — Systemmediensteuerungsinformationen mit Browserthemen synchronisieren"
-
-[cli.dev]
-about = "Themen-Entwicklungsserver starten (ohne GUI, mit Hot Reload)"
-
-[cli.dev.args]
-port = "HTTP-Serverport"
-no-open = "Browser nicht automatisch öffnen"
-vite = "Vite-Modus aktivieren (wird automatisch erkannt, wenn vite.config vorhanden ist)"
-vite-port = "Port des Vite-Dev-Servers"
-path = "Themenverzeichnis (Standard: aktuelles Verzeichnis)"

@@ -81,6 +81,12 @@
         "scanning": "체계 글꼴을 검사하는 중...",
         "scanningHint": "설치된 글꼴을 감지하는 중입니다. 잠시 기다리십시오..."
       }
+    },
+    "serverUrl": {
+      "label": "접속 주소",
+      "hint": "이 주소를 OBS 브라우저 원천에 붙여넣으면 재생 중인 정보가 표시됩니다.",
+      "copy": "베끼기",
+      "copied": "베껴짐"
     }
   },
   "update": {
@@ -94,7 +100,8 @@
     "noUpdate": "이미 최신 판입니다",
     "installPrompt": "갱신이 내리적재되었습니다. 지금 다시 시작하여 설치하시겠습니까?",
     "downloadError": "내리적재 실패",
-    "releaseNotes": "갱신 내용"
+    "releaseNotes": "갱신 내용",
+    "downloadProgress": "{downloaded} MB / {total} MB ({percent}%)"
   },
   "common": {
     "loading": "읽는 중...",

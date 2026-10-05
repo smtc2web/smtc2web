@@ -43,6 +43,7 @@ body {
     flex: 1;
     padding: var(--ui-space-lg) 32px;
     overflow-y: auto;
+    overflow-x: hidden;
     width: 100%;
 }
 

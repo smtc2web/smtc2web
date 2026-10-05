@@ -81,6 +81,12 @@
         "scanning": "Systemschriftarten werden gescannt...",
         "scanningHint": "Installierte Schriftarten werden erkannt, bitte warten..."
       }
+    },
+    "serverUrl": {
+      "label": "Zugriffsadresse",
+      "hint": "Kopieren Sie diese Adresse in eine OBS-Browserquelle, um die Wiedergabeinformationen anzuzeigen.",
+      "copy": "Kopieren",
+      "copied": "Kopiert"
     }
   },
   "update": {
@@ -94,7 +100,8 @@
     "noUpdate": "Bereits auf dem neuesten Stand",
     "installPrompt": "Update heruntergeladen. Jetzt neu starten und installieren?",
     "downloadError": "Download fehlgeschlagen",
-    "releaseNotes": "Versionshinweise"
+    "releaseNotes": "Versionshinweise",
+    "downloadProgress": "{downloaded} MB / {total} MB ({percent} %)"
   },
   "common": {
     "loading": "Wird geladen...",

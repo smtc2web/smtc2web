@@ -10,12 +10,22 @@ export interface UpdateCheckResult {
   error: string | null;
 }
 
+export interface UpdateProgress {
+  /** 已下载字节数 */
+  downloaded: number;
+  /** 总字节数（未知时为 null） */
+  total: number | null;
+  /** 百分比（0–100，未知时为 null） */
+  percent: number | null;
+}
+
 export const useUpdateStore = defineStore("update", () => {
   const checking = ref(false);
   const downloading = ref(false);
   const lastResult = ref<UpdateCheckResult | null>(null);
   const showDialog = ref(false);
   const downloadError = ref<string | null>(null);
+  const progress = ref<UpdateProgress | null>(null);
 
   async function checkForUpdates(): Promise<UpdateCheckResult | null> {
     if (!hasTauri()) return null;
@@ -49,6 +59,7 @@ export const useUpdateStore = defineStore("update", () => {
     if (!lastResult.value?.has_update) return;
     downloading.value = true;
     downloadError.value = null;
+    progress.value = { downloaded: 0, total: null, percent: null };
 
     try {
       await tauriInvoke("start_update");
@@ -61,9 +72,14 @@ export const useUpdateStore = defineStore("update", () => {
     }
   }
 
+  function setProgress(payload: UpdateProgress) {
+    progress.value = payload;
+  }
+
   function closeDialog() {
     showDialog.value = false;
     downloadError.value = null;
+    progress.value = null;
   }
 
   return {
@@ -72,8 +88,10 @@ export const useUpdateStore = defineStore("update", () => {
     lastResult,
     showDialog,
     downloadError,
+    progress,
     checkForUpdates,
     downloadAndInstall,
+    setProgress,
     closeDialog,
   };
 });

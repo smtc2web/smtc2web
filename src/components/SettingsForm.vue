@@ -27,6 +27,27 @@
             />
         </div>
 
+        <!-- 服务器地址显示：可直接复制到 OBS 浏览器源 -->
+        <div class="form-group">
+            <label>{{ t("settings.serverUrl.label") }}</label>
+            <div class="server-url">
+                <code class="server-url-value">{{ serverUrl }}</code>
+                <button
+                    type="button"
+                    class="btn btn-secondary btn-copy"
+                    @click="copyServerUrl"
+                >
+                    <font-awesome-icon :icon="copied ? 'check' : 'copy'" />
+                    {{
+                        copied
+                            ? t("settings.serverUrl.copied")
+                            : t("settings.serverUrl.copy")
+                    }}
+                </button>
+            </div>
+            <p class="hint">{{ t("settings.serverUrl.hint") }}</p>
+        </div>
+
         <!-- 进程过滤器 -->
         <div class="form-group">
             <label>{{ t("settings.processFilter.label") }}</label>
@@ -223,6 +244,47 @@ const updateStatusText = computed(() => {
     });
 });
 
+/** 供 OBS 浏览器源直接使用的完整服务器地址 */
+const serverUrl = computed(() => {
+    const host = (localConfig.address || "127.0.0.1").trim();
+    return `http://${host}:${localConfig.server_port}`;
+});
+
+const copied = ref(false);
+let copyTimer: ReturnType<typeof setTimeout> | null = null;
+
+async function copyServerUrl() {
+    const url = serverUrl.value;
+    let ok = false;
+    try {
+        if (navigator.clipboard?.writeText) {
+            await navigator.clipboard.writeText(url);
+            ok = true;
+        }
+    } catch {
+        ok = false;
+    }
+    if (!ok) {
+        try {
+            const el = document.createElement("textarea");
+            el.value = url;
+            el.style.position = "fixed";
+            el.style.opacity = "0";
+            document.body.appendChild(el);
+            el.select();
+            ok = document.execCommand("copy");
+            document.body.removeChild(el);
+        } catch {
+            ok = false;
+        }
+    }
+    if (ok) {
+        copied.value = true;
+        if (copyTimer) clearTimeout(copyTimer);
+        copyTimer = setTimeout(() => (copied.value = false), 1500);
+    }
+}
+
 watch(
     () => props.config,
     (newConfig: AppConfig) => {
@@ -330,12 +392,13 @@ onMounted(() => {
   color: var(--ui-text-on-accent);
   cursor: pointer;
   transition: background-color var(--ui-transition-fast),
-    border-color var(--ui-transition-fast);
+    border-color var(--ui-transition-fast), transform var(--ui-transition-fast);
 }
 
 .checkbox-box[data-state='checked'] {
   background-color: var(--ui-accent);
   border-color: var(--ui-accent);
+  animation: checkbox-pop 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .checkbox-box:focus {
@@ -346,12 +409,61 @@ onMounted(() => {
 .checkbox-indicator {
   display: flex;
   font-size: 12px;
+  animation: checkbox-indicator-in 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes checkbox-indicator-in {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes checkbox-pop {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.16);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 .hint {
     font-size: 12px;
     color: var(--ui-text-secondary);
     margin-top: var(--ui-space-xs);
+}
+
+.server-url {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-space-sm);
+}
+
+.server-url-value {
+    flex: 1;
+    min-width: 0;
+    padding: 10px 12px;
+    background-color: var(--ui-bg-secondary);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius-md);
+    font-family: monospace;
+    font-size: 13px;
+    color: var(--ui-text-primary);
+    overflow-x: auto;
+    white-space: nowrap;
+}
+
+.btn-copy {
+    flex-shrink: 0;
+    white-space: nowrap;
 }
 
 .current-app {
@@ -459,5 +571,13 @@ onMounted(() => {
     font-size: 11px;
     color: var(--ui-text-secondary);
     margin-top: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .checkbox-box,
+    .checkbox-indicator {
+        animation: none !important;
+        transition: none !important;
+    }
 }
 </style>

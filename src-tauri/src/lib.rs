@@ -1,11 +1,14 @@
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 
 use serde::{Deserialize, Serialize};
-use std::net::IpAddr;
+use std::net::{IpAddr, SocketAddr};
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex, RwLock};
+use std::time::Duration;
 use tauri::{Manager, Runtime, WebviewWindow, WebviewWindowBuilder};
-use tokio::sync::oneshot;
+use tokio::sync::{broadcast, oneshot};
+use tokio_stream::StreamExt;
+use tokio_stream::wrappers::BroadcastStream;
 use warp::Filter;
 
 mod config;
@@ -17,9 +20,6 @@ mod theme;
 mod theme_manager;
 mod tray;
 mod updater;
-
-pub mod cli;
-pub mod dev;
 
 #[derive(Default, Clone, Serialize, PartialEq)]
 pub struct Song {
@@ -46,9 +46,15 @@ pub type Shared = Arc<RwLock<Song>>;
 
 struct AppState {
     config: Arc<Mutex<config::Config>>,
+    /// 用于关闭当前 Web 服务器的 oneshot 发送端
     server_tx: Option<oneshot::Sender<()>>,
-    server_port: u16,
+    /// 当前 Web 服务器任务句柄（重载时先终止再重建）
+    server_handle: Option<tokio::task::JoinHandle<()>>,
+    /// 与服务器共享的媒体状态（重载时复用）
     shared_state: Option<Shared>,
+    /// 当前服务器实际监听的地址与端口
+    server_address: Option<IpAddr>,
+    server_port: u16,
 }
 
 static CURRENT_APP_ID: std::sync::LazyLock<Mutex<String>> =
@@ -61,8 +67,10 @@ static APP_STATE: std::sync::LazyLock<Mutex<AppState>> = std::sync::LazyLock::ne
     Mutex::new(AppState {
         config: Arc::new(Mutex::new(config::Config::default())),
         server_tx: None,
-        server_port: 3030,
+        server_handle: None,
         shared_state: None,
+        server_address: None,
+        server_port: 3030,
     })
 });
 
@@ -73,6 +81,20 @@ static APP_STATE: std::sync::LazyLock<Mutex<AppState>> = std::sync::LazyLock::ne
 // the cached response instead of re-rendering the whole cover each poll.
 type NowCache = std::sync::LazyLock<std::sync::Mutex<Option<(String, Vec<u8>)>>>;
 static NOW_CACHE: NowCache = std::sync::LazyLock::new(|| Mutex::new(None));
+
+/// 主题/服务器实时通道消息。
+///
+/// - `Reload`：主题切换，通知已连接页面刷新。
+/// - `Shutdown`：服务器即将重载，SSE 连接应主动结束以释放端口。
+#[derive(Clone, Copy)]
+pub enum LiveMsg {
+    Reload,
+    Shutdown,
+}
+
+/// 主题热重载 / 服务器重载广播通道。
+pub static LIVE_TX: std::sync::LazyLock<broadcast::Sender<LiveMsg>> =
+    std::sync::LazyLock::new(|| broadcast::channel::<LiveMsg>(16).0);
 
 /* ---------- 主题文件托管由 theme.rs 提供 ---------- */
 
@@ -257,8 +279,8 @@ fn check_single_instance() -> Result<SingleInstance, String> {
 // -------------------- 后台媒体事件 (Windows: 事件驱动, Linux: 轮询) --------------------
 fn media_worker(state: Shared) {
     let process_filter = {
-        let app_state = APP_STATE.lock().unwrap();
-        let config = app_state.config.lock().unwrap();
+        let app_state = APP_STATE.lock().unwrap_or_else(|e| e.into_inner());
+        let config = app_state.config.lock().unwrap_or_else(|e| e.into_inner());
         config.process_filter.clone()
     };
 
@@ -285,55 +307,97 @@ fn media_worker(state: Shared) {
     }
 }
 
+/// 解析配置中的监听地址，非法时回退到 127.0.0.1。
+fn resolve_address(config: &config::Config) -> IpAddr {
+    config.address.trim().parse::<IpAddr>().unwrap_or_else(|_| {
+        log_warn!(
+            "配置中的监听地址 '{}' 无效，已回退到 127.0.0.1",
+            config.address
+        );
+        IpAddr::from([127, 0, 0, 1])
+    })
+}
+
+/// 根据主题名得到服务器使用的磁盘路径（default 表示使用内嵌主题）。
+fn theme_server_path(theme_name: &str) -> PathBuf {
+    if theme_name.is_empty() || theme_name == "default" {
+        PathBuf::new()
+    } else {
+        theme_manager::ThemeManager::get_theme_server_path(theme_name)
+    }
+}
+
 // 启动 Web 服务器
 async fn start_server(
     state: Shared,
+    address: IpAddr,
     port: u16,
     current_theme: String,
-) -> (oneshot::Sender<()>, tokio::task::JoinHandle<()>) {
-    let address = {
-        let app_state = APP_STATE.lock().unwrap();
-        let config = app_state.config.lock().unwrap();
-        config
-            .address
-            .parse::<IpAddr>()
-            .expect("Invalid IP address in config")
-    };
-
-    let theme_path = if current_theme.is_empty() || current_theme == "default" {
-        PathBuf::new()
-    } else {
-        theme_manager::ThemeManager::get_theme_server_path(&current_theme)
-    };
-
-    let theme_manager = theme::ThemeManager::new(&theme_path.to_string_lossy());
+) -> Result<(oneshot::Sender<()>, tokio::task::JoinHandle<()>), String> {
+    // 将主题路径登记为全局活动主题，后续切换主题时无需重启服务器。
+    theme::set_active_theme_path(theme_server_path(&current_theme));
 
     let api = warp::path!("api" / "now")
         .and(with_state(state.clone()))
         .map(|s: Shared| handle_now(&s));
 
-    let theme_files = warp::path("theme")
-        .and(warp::path::tail())
-        .and(theme::ThemeManager::with_manager(theme_manager.clone()))
-        .and_then(|tail, manager: theme::ThemeManager| manager.serve_theme_file(tail));
-
-    let static_files = warp::path::tail()
-        .and(theme::ThemeManager::with_manager(theme_manager))
-        .and_then(|tail, manager: theme::ThemeManager| manager.serve_theme_file(tail));
-
-    let (tx, rx) = oneshot::channel::<()>();
-
-    let server_handle = tokio::spawn(async move {
-        let (_, server) = warp::serve(api.or(theme_files).or(static_files))
-            .bind_with_graceful_shutdown((address, port), async {
-                let _ = rx.await;
+    // 主题/服务器热重载 SSE 端点。
+    let reload = warp::path!("__reload").and(warp::get()).map(|| {
+        log_info!("主题页面已连接到热重载通道 (/__reload)");
+        let rx = LIVE_TX.subscribe();
+        let stream = BroadcastStream::new(rx)
+            // 收到 Shutdown 时结束流，主动断开连接以便旧监听端口尽快释放。
+            .take_while(|res| !matches!(res, Ok(LiveMsg::Shutdown)))
+            .map(|_| {
+                Ok::<_, warp::Error>(warp::sse::Event::default().event("reload").data("reload"))
             });
-        server.await;
+        warp::sse::reply(warp::sse::keep_alive().stream(stream))
     });
 
-    log_info!("Server running at http://{}:{}", address, port);
+    let theme_files = warp::path("theme")
+        .and(warp::path::tail())
+        .and_then(theme::serve_theme_file);
 
-    (tx, server_handle)
+    let static_files = warp::path::tail().and_then(theme::serve_theme_file);
+
+    let routes = api.or(reload).or(theme_files).or(static_files);
+    let addr = SocketAddr::new(address, port);
+
+    // 绑定失败时短暂重试：重载场景下旧连接释放端口可能存在延迟。
+    let mut last_err = String::new();
+    for _ in 0..10 {
+        let (tx, rx) = oneshot::channel::<()>();
+        match warp::serve(routes.clone()).try_bind_with_graceful_shutdown(addr, async move {
+            let _ = rx.await;
+        }) {
+            Ok((_, server)) => {
+                let server_handle = tokio::spawn(server);
+                log_info!("Web 服务器已启动: http://{}:{}", address, port);
+                return Ok((tx, server_handle));
+            }
+            Err(e) => {
+                last_err = e.to_string();
+                tokio::time::sleep(Duration::from_millis(150)).await;
+            }
+        }
+    }
+
+    Err(format!("无法绑定 {}：{}", addr, last_err))
+}
+
+/// 保存当前正在运行的服务器句柄与监听信息。
+fn store_server(
+    tx: oneshot::Sender<()>,
+    handle: tokio::task::JoinHandle<()>,
+    address: IpAddr,
+    port: u16,
+) -> Result<(), String> {
+    let mut app_state = APP_STATE.lock().map_err(|e| e.to_string())?;
+    app_state.server_tx = Some(tx);
+    app_state.server_handle = Some(handle);
+    app_state.server_address = Some(address);
+    app_state.server_port = port;
+    Ok(())
 }
 
 // -------------------- Tauri 命令 --------------------
@@ -351,36 +415,26 @@ async fn get_current_theme() -> Result<String, String> {
 }
 
 #[tauri::command]
-async fn set_theme(theme_name: String, _app_handle: tauri::AppHandle) -> Result<(), String> {
-    let (port, state) = {
-        let mut app_state = APP_STATE.lock().map_err(|e| e.to_string())?;
-        if let Some(tx) = app_state.server_tx.take() {
-            let _ = tx.send(());
-        }
-
-        {
-            let mut config = app_state.config.lock().map_err(|e| e.to_string())?;
-            config.current_theme = theme_name.clone();
-            config.save().map_err(|e| e.to_string())?;
-        }
-
-        let port = app_state
-            .config
-            .lock()
-            .map_err(|e| e.to_string())?
-            .server_port;
-        let state = app_state
-            .shared_state
-            .clone()
-            .ok_or("Shared state not initialized")?;
-        (port, state)
-    };
-
-    let (tx, _) = start_server(state, port, theme_name).await;
-
+async fn set_theme(theme_name: String) -> Result<(), String> {
+    // 更新配置中的当前主题
     {
-        let mut app_state = APP_STATE.lock().map_err(|e| e.to_string())?;
-        app_state.server_tx = Some(tx);
+        let app_state = APP_STATE.lock().map_err(|e| e.to_string())?;
+        let mut config = app_state.config.lock().map_err(|e| e.to_string())?;
+        config.current_theme = theme_name.clone();
+        config.save().map_err(|e| e.to_string())?;
+    }
+
+    // 更新全局活动主题路径：服务器无需重启即可提供新主题文件。
+    theme::set_active_theme_path(theme_server_path(&theme_name));
+
+    // 通知所有已打开的主题页面刷新，加载新主题。
+    match LIVE_TX.send(LiveMsg::Reload) {
+        Ok(receivers) => {
+            log_info!("主题已切换为 {}，已向 {} 个主题页面广播刷新命令", theme_name, receivers);
+        }
+        Err(_) => {
+            log_info!("主题已切换为 {}，当前没有已连接的主题页面", theme_name);
+        }
     }
 
     Ok(())
@@ -507,20 +561,120 @@ async fn get_config() -> Result<ConfigDto, String> {
 
 #[tauri::command]
 async fn save_config(config_dto: ConfigDto) -> Result<(), String> {
-    let app_state = APP_STATE.lock().map_err(|e| e.to_string())?;
-    let mut config = app_state.config.lock().map_err(|e| e.to_string())?;
+    // 校验监听地址：必须是合法的 IP（服务器绑定地址需要 IpAddr）。
+    let address: IpAddr = config_dto.address.trim().parse().map_err(|_| {
+        format!(
+            "无效的监听地址 '{}'，请输入合法的 IP（例如 127.0.0.1 或 0.0.0.0）",
+            config_dto.address
+        )
+    })?;
 
-    config.server_port = config_dto.server_port;
-    config.address = config_dto.address;
-    config.current_theme = config_dto.current_theme;
-    config.locale = config_dto.locale;
-    config.process_filter = config_dto.process_filter;
-    config.auto_check_update = config_dto.auto_check_update;
-    config.minimize_to_tray = config_dto.minimize_to_tray;
-    config.lightweight_mode = config_dto.lightweight_mode;
-    config.font_family = config_dto.font_family;
+    let (old_theme, new_theme, should_reload, old_tx, old_handle, shared, old_address, old_port) = {
+        let mut app_state = APP_STATE.lock().map_err(|e| e.to_string())?;
 
-    config.save().map_err(|e| e.to_string())
+        // 记录当前正在运行的监听信息，用于判断是否需要重载。
+        let old_address = app_state.server_address;
+        let old_port = app_state.server_port;
+
+        let (old_theme, new_theme) = {
+            let mut config = app_state.config.lock().map_err(|e| e.to_string())?;
+            let old_theme = config.current_theme.clone();
+
+            config.server_port = config_dto.server_port;
+            config.address = address.to_string();
+            config.current_theme = config_dto.current_theme.clone();
+            config.locale = config_dto.locale.clone();
+            config.process_filter = config_dto.process_filter.clone();
+            config.auto_check_update = config_dto.auto_check_update;
+            config.minimize_to_tray = config_dto.minimize_to_tray;
+            config.lightweight_mode = config_dto.lightweight_mode;
+            config.font_family = config_dto.font_family.clone();
+
+            config.save().map_err(|e| e.to_string())?;
+            (old_theme, config.current_theme.clone())
+        };
+
+        let should_reload = old_address != Some(address) || old_port != config_dto.server_port;
+
+        let (old_tx, old_handle, shared) = if should_reload {
+            (
+                app_state.server_tx.take(),
+                app_state.server_handle.take(),
+                app_state.shared_state.clone(),
+            )
+        } else {
+            (None, None, None)
+        };
+
+        (
+            old_theme, new_theme, should_reload, old_tx, old_handle, shared, old_address, old_port,
+        )
+    };
+
+    // 主题路径随时保持与配置一致（若通过保存修改了主题也一并生效）。
+    theme::set_active_theme_path(theme_server_path(&new_theme));
+
+    // 主题发生变化时通知已连接页面刷新。
+    if old_theme != new_theme {
+        let _ = LIVE_TX.send(LiveMsg::Reload);
+    }
+
+    // 监听地址或端口发生变化：重载服务器。
+    if should_reload {
+        // 1. 通知所有 SSE 连接主动结束，便于旧监听端口尽快释放。
+        let _ = LIVE_TX.send(LiveMsg::Shutdown);
+        tokio::time::sleep(Duration::from_millis(200)).await;
+
+        // 2. 终止旧服务器任务。
+        if let Some(tx) = old_tx {
+            let _ = tx.send(());
+        }
+        if let Some(handle) = old_handle {
+            // 优雅关闭可能被长连接阻塞，这里强制终止以尽快释放端口。
+            handle.abort();
+            let _ = handle.await;
+        }
+
+        // 3. 用新地址/端口重建服务器。
+        if let Some(shared) = shared {
+            match start_server(
+                shared.clone(),
+                address,
+                config_dto.server_port,
+                new_theme.clone(),
+            )
+            .await
+            {
+                Ok((tx, handle)) => {
+                    store_server(tx, handle, address, config_dto.server_port)?;
+                    log_info!(
+                        "配置已保存，Web 服务器已重载到 http://{}:{}",
+                        address,
+                        config_dto.server_port
+                    );
+                }
+                Err(e) => {
+                    log_error!(
+                        "配置已保存，但 Web 服务器重载到 {}:{} 失败: {}",
+                        address,
+                        config_dto.server_port,
+                        e
+                    );
+                    // 回退到旧监听配置，避免完全没有可用的服务器。
+                    if let Some(old_address) = old_address
+                        && let Ok((tx, handle)) =
+                            start_server(shared, old_address, old_port, new_theme.clone()).await
+                    {
+                        store_server(tx, handle, old_address, old_port)?;
+                        log_warn!("已回退到原监听地址 http://{}:{}", old_address, old_port);
+                    }
+                    return Err(format!("Web 服务器重载失败: {}", e));
+                }
+            }
+        }
+    }
+
+    Ok(())
 }
 
 #[tauri::command]
@@ -711,21 +865,40 @@ pub fn run() {
 
     std::thread::spawn(move || media_worker(st));
 
-    let (port, current_theme) = {
+    let (port, current_theme, address) = {
         let config_guard = config.lock().unwrap();
-        (config_guard.server_port, config_guard.current_theme.clone())
+        (
+            config_guard.server_port,
+            config_guard.current_theme.clone(),
+            resolve_address(&config_guard),
+        )
     };
 
-    let state_for_server = state.clone();
-    let (server_tx, server_handle) =
-        runtime.block_on(async { start_server(state_for_server, port, current_theme).await });
-
+    // 先登记配置，确保后续命令能读取到正确的配置。
     {
         let mut app_state = APP_STATE.lock().unwrap();
         app_state.config = config.clone();
+    }
+
+    let state_for_server = state.clone();
+    let (server_tx, server_handle) = match runtime.block_on(async {
+        start_server(state_for_server, address, port, current_theme).await
+    }) {
+        Ok(server) => server,
+        Err(e) => {
+            log_error!("启动 Web 服务器失败: {}", e);
+            std::process::exit(1);
+        }
+    };
+
+    // 保存服务器句柄，供保存配置后的自动重载使用。
+    {
+        let mut app_state = APP_STATE.lock().unwrap();
         app_state.server_tx = Some(server_tx);
-        app_state.server_port = port;
+        app_state.server_handle = Some(server_handle);
         app_state.shared_state = Some(state);
+        app_state.server_address = Some(address);
+        app_state.server_port = port;
     }
 
     // 清理历史遗留的开机自启动注册表项（该功能已移除）
@@ -813,6 +986,23 @@ pub fn run() {
         });
 
     runtime.block_on(async {
-        let _ = server_handle.await;
+        let (tx, handle) = APP_STATE
+            .lock()
+            .map(|mut app| (app.server_tx.take(), app.server_handle.take()))
+            .unwrap_or((None, None));
+
+        // 通知 SSE 连接结束，再停止服务器；超时则强制终止。
+        let _ = LIVE_TX.send(LiveMsg::Shutdown);
+        if let Some(tx) = tx {
+            let _ = tx.send(());
+        }
+        if let Some(mut handle) = handle
+            && tokio::time::timeout(Duration::from_millis(1000), &mut handle)
+                .await
+                .is_err()
+        {
+            handle.abort();
+            let _ = handle.await;
+        }
     });
 }

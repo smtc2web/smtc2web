@@ -102,11 +102,11 @@ defineExpose({ installing });
 }
 
 .dialog-overlay[data-state='open'] {
-  animation: dialog-fade-in 0.2s ease;
+  animation: dialog-overlay-in 0.2s ease;
 }
 
 .dialog-overlay[data-state='closed'] {
-  animation: dialog-fade-out 0.2s ease;
+  animation: dialog-overlay-out 0.16s ease-in forwards;
 }
 
 .dialog {
@@ -125,11 +125,11 @@ defineExpose({ installing });
 }
 
 .dialog[data-state='open'] {
-  animation: dialog-fade-in 0.2s ease;
+  animation: dialog-content-in 0.26s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .dialog[data-state='closed'] {
-  animation: dialog-fade-out 0.2s ease;
+  animation: dialog-content-out 0.16s ease-in forwards;
 }
 
 .dialog-header {
@@ -234,7 +234,7 @@ defineExpose({ installing });
   cursor: not-allowed;
 }
 
-@keyframes dialog-fade-in {
+@keyframes dialog-overlay-in {
   from {
     opacity: 0;
   }
@@ -243,12 +243,41 @@ defineExpose({ installing });
   }
 }
 
-@keyframes dialog-fade-out {
+@keyframes dialog-overlay-out {
   from {
     opacity: 1;
   }
   to {
     opacity: 0;
+  }
+}
+
+@keyframes dialog-content-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes dialog-content-out {
+  from {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.96);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dialog-overlay,
+  .dialog {
+    animation: none !important;
   }
 }
 </style>

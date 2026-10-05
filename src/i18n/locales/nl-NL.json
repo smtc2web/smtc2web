@@ -81,6 +81,12 @@
         "scanning": "Systeemlettertypen scannen...",
         "scanningHint": "Geïnstalleerde lettertypen detecteren, even geduld..."
       }
+    },
+    "serverUrl": {
+      "label": "Toegangsadres",
+      "hint": "Kopieer dit adres naar een OBS-browserbron om de nu-afspelende informatie te tonen.",
+      "copy": "Kopiëren",
+      "copied": "Gekopieerd"
     }
   },
   "update": {
@@ -94,7 +100,8 @@
     "noUpdate": "Al bijgewerkt",
     "installPrompt": "Update gedownload. Nu opnieuw starten om te installeren?",
     "downloadError": "Download mislukt",
-    "releaseNotes": "Releaseopmerkingen"
+    "releaseNotes": "Releaseopmerkingen",
+    "downloadProgress": "{downloaded} MB / {total} MB ({percent}%)"
   },
   "common": {
     "loading": "Laden...",

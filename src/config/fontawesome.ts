@@ -20,6 +20,7 @@ import {
   faRotate,
   faCircleUp,
   faCodeBranch,
+  faCopy,
 } from "@fortawesome/free-solid-svg-icons";
 
 // Add icons to the library
@@ -43,4 +44,5 @@ library.add(
   faRotate,
   faCircleUp,
   faCodeBranch,
+  faCopy,
 );

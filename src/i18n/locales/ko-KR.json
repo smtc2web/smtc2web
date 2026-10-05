@@ -81,6 +81,12 @@
         "scanning": "시스템 글꼴 스캔 중...",
         "scanningHint": "설치된 글꼴을 감지하는 중입니다. 잠시 기다려 주세요..."
       }
+    },
+    "serverUrl": {
+      "label": "접속 주소",
+      "hint": "이 주소를 OBS 브라우저 소스에 붙여넣으면 재생 중인 정보가 표시됩니다.",
+      "copy": "복사",
+      "copied": "복사됨"
     }
   },
   "update": {
@@ -94,7 +100,8 @@
     "noUpdate": "이미 최신 버전",
     "installPrompt": "업데이트가 다운로드되었습니다. 지금 다시 시작하여 설치하시겠습니까?",
     "downloadError": "다운로드 실패",
-    "releaseNotes": "업데이트 내용"
+    "releaseNotes": "업데이트 내용",
+    "downloadProgress": "{downloaded} MB / {total} MB ({percent}%)"
   },
   "common": {
     "loading": "불러오는 중...",

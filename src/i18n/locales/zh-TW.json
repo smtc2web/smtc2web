@@ -81,6 +81,12 @@
         "scanning": "正在掃描系統字型...",
         "scanningHint": "自動偵測已安裝的字型，請稍候..."
       }
+    },
+    "serverUrl": {
+      "label": "存取位址",
+      "hint": "將此位址複製到 OBS 瀏覽器來源，即可顯示正在播放的資訊。",
+      "copy": "複製",
+      "copied": "已複製"
     }
   },
   "update": {
@@ -94,7 +100,8 @@
     "noUpdate": "已是最新版本",
     "installPrompt": "更新已下載，是否立即重新啟動安裝？",
     "downloadError": "下載失敗",
-    "releaseNotes": "更新內容"
+    "releaseNotes": "更新內容",
+    "downloadProgress": "{downloaded} MB / {total} MB（{percent}%）"
   },
   "common": {
     "loading": "載入中……",

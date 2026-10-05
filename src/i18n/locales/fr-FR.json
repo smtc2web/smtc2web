@@ -81,6 +81,12 @@
         "scanning": "Analyse des polices système...",
         "scanningHint": "Détection des polices installées, veuillez patienter..."
       }
+    },
+    "serverUrl": {
+      "label": "Adresse d'accès",
+      "hint": "Copiez cette adresse dans une source navigateur OBS pour afficher les informations en cours de lecture.",
+      "copy": "Copier",
+      "copied": "Copié"
     }
   },
   "update": {
@@ -94,7 +100,8 @@
     "noUpdate": "Déjà à jour",
     "installPrompt": "Mise à jour téléchargée. Redémarrer maintenant pour installer ?",
     "downloadError": "Échec du téléchargement",
-    "releaseNotes": "Notes de version"
+    "releaseNotes": "Notes de version",
+    "downloadProgress": "{downloaded} Mo / {total} Mo ({percent} %)"
   },
   "common": {
     "loading": "Chargement...",

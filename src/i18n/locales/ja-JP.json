@@ -81,6 +81,12 @@
         "scanning": "システムフォントをスキャン中...",
         "scanningHint": "インストール済みフォントを検出しています。お待ちください..."
       }
+    },
+    "serverUrl": {
+      "label": "アクセスアドレス",
+      "hint": "このアドレスを OBS のブラウザソースに貼り付けると、再生中の情報が表示されます。",
+      "copy": "コピー",
+      "copied": "コピーしました"
     }
   },
   "update": {
@@ -94,7 +100,8 @@
     "noUpdate": "すでに最新です",
     "installPrompt": "更新がダウンロードされました。今すぐ再起動してインストールしますか？",
     "downloadError": "ダウンロードに失敗しました",
-    "releaseNotes": "更新内容"
+    "releaseNotes": "更新内容",
+    "downloadProgress": "{downloaded} MB / {total} MB ({percent}%)"
   },
   "common": {
     "loading": "読み込み中...",

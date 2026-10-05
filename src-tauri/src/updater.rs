@@ -1,7 +1,8 @@
 use crate::log_info;
 use serde::Serialize;
 use std::sync::Mutex;
-use tauri::{AppHandle, Manager};
+use std::sync::atomic::{AtomicU64, Ordering};
+use tauri::{AppHandle, Emitter, Manager};
 use tauri_plugin_updater::{Update, UpdaterExt};
 
 /// 暂存 `check` 得到的待安装更新，供 `start_update` 使用。
@@ -21,6 +22,17 @@ pub struct UpdateCheckResult {
     pub notes: Option<String>,
     /// 错误信息（如果有）
     pub error: Option<String>,
+}
+
+/// 更新下载进度事件负载
+#[derive(Debug, Serialize, Clone)]
+pub struct UpdateProgress {
+    /// 已下载字节数
+    pub downloaded: u64,
+    /// 总字节数（服务器未提供时为 null）
+    pub total: Option<u64>,
+    /// 百分比（0–100，总大小未知时为 null）
+    pub percent: Option<f64>,
 }
 
 /// 手动检查更新。更新源、签名校验均由 Tauri updater 插件管理。
@@ -65,7 +77,7 @@ pub async fn check_update(app: AppHandle) -> Result<UpdateCheckResult, String> {
     }
 }
 
-/// 下载并安装待处理的更新。
+/// 下载并安装待处理的更新，过程中通过 `update-progress` 事件上报进度。
 #[tauri::command]
 pub async fn start_update(app: AppHandle) -> Result<(), String> {
     let update = app
@@ -77,10 +89,42 @@ pub async fn start_update(app: AppHandle) -> Result<(), String> {
         .ok_or("没有待安装的更新，请先检查更新")?;
 
     log_info!("开始下载并安装更新: {}", update.version);
+
+    let downloaded = std::sync::Arc::new(AtomicU64::new(0));
+    let downloaded_for_chunk = downloaded.clone();
+    let app_for_progress = app.clone();
+
     update
-        .download_and_install(|_, _| {}, || {})
+        .download_and_install(
+            move |chunk_length, content_length| {
+                let current = downloaded_for_chunk
+                    .fetch_add(chunk_length as u64, Ordering::Relaxed)
+                    + chunk_length as u64;
+                let percent = content_length
+                    .filter(|total| *total > 0)
+                    .map(|total| (current as f64 / total as f64 * 100.0).min(100.0));
+                let _ = app_for_progress.emit(
+                    "update-progress",
+                    UpdateProgress {
+                        downloaded: current,
+                        total: content_length,
+                        percent,
+                    },
+                );
+            },
+            || {},
+        )
         .await
         .map_err(|e| format!("安装更新失败: {}", e))?;
+
+    let _ = app.emit(
+        "update-progress",
+        UpdateProgress {
+            downloaded: downloaded.load(Ordering::Relaxed),
+            total: None,
+            percent: Some(100.0),
+        },
+    );
 
     app.restart();
 }

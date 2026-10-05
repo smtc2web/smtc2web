@@ -81,6 +81,12 @@
         "scanning": "正在扫描系统字体...",
         "scanningHint": "自动检测已安装的字体，请稍候..."
       }
+    },
+    "serverUrl": {
+      "label": "访问地址",
+      "hint": "复制此地址到 OBS 浏览器源，即可显示正在播放的信息。",
+      "copy": "复制",
+      "copied": "已复制"
     }
   },
   "update": {
@@ -94,7 +100,8 @@
     "noUpdate": "已是最新版本",
     "installPrompt": "更新已下载，是否立即重启安装？",
     "downloadError": "下载失败",
-    "releaseNotes": "更新内容"
+    "releaseNotes": "更新内容",
+    "downloadProgress": "{downloaded} MB / {total} MB（{percent}%）"
   },
   "common": {
     "loading": "加载中……",

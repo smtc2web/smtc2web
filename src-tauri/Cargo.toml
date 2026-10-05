@@ -3,13 +3,12 @@ authors = ["smtc2web Contributors"]
 description = "An software can let OBS show playing media."
 edition = "2024"
 name = "smtc2web"
-version = "0.6.5"
+version = "0.6.6"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
 default = ["custom-protocol"]
-dev = []
 custom-protocol = ["tauri/custom-protocol"]
 
 [lib]
@@ -33,7 +32,7 @@ serde = {version = "1", features = ["derive"] }
 serde_json = "1"
 tauri = {version = "2", features = ["tray-icon", "image-png"] }
 
-tokio = {version = "1", features = ["rt-multi-thread", "macros", "signal", "process"] }
+tokio = {version = "1", features = ["rt-multi-thread", "macros", "sync", "time"] }
 toml = "0.8"
 warp = "0.3"
 chrono = "0.4"
@@ -41,8 +40,6 @@ named-lock = "0.4"
 
 zip = "0.6"
 
-clap = { version = "4", features = ["derive"] }
-reqwest = { version = "0.12", features = ["json"] }
 tauri-plugin-updater = "2"
 ttf-parser = "0.25"
 tokio-stream = { version = "0.1", features = ["sync"] }
