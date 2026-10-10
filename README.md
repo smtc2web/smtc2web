@@ -103,4 +103,4 @@ gdbus call --session \
 
 ## 构建
 
-- [Windows](https://smtc2web.org/wiki/compile/windows)
+https://smtc2web.org/wiki/compile
