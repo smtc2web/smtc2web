@@ -1,7 +1,4 @@
 use serde::Deserialize;
-use std::collections::HashMap;
-use std::fs;
-use std::path::PathBuf;
 use std::sync::Mutex;
 
 /// 托盘菜单翻译结构
@@ -23,59 +20,28 @@ pub struct Locale {
 pub static CURRENT_LOCALE: std::sync::LazyLock<Mutex<String>> =
     std::sync::LazyLock::new(|| Mutex::new("zh-CN".to_string()));
 
-/// 缓存的语言包
-pub static LOCALE_CACHE: std::sync::LazyLock<Mutex<HashMap<String, Locale>>> =
-    std::sync::LazyLock::new(|| Mutex::new(HashMap::new()));
-
-/// 加载指定语言的翻译文件
-pub fn load_locale(locale: &str) -> Option<Locale> {
-    // 首先检查缓存
-    {
-        let cache = LOCALE_CACHE.lock().unwrap();
-        if let Some(cached) = cache.get(locale) {
-            return Some(cached.clone());
-        }
-    }
-
-    // 获取语言文件路径
-    let path = get_locale_path(locale)?;
-
-    // 读取并解析 TOML 文件
-    let content = fs::read_to_string(&path).ok()?;
-    let locale_data: Locale = toml::from_str(&content).ok()?;
-
-    // 存入缓存
-    {
-        let mut cache = LOCALE_CACHE.lock().unwrap();
-        cache.insert(locale.to_string(), locale_data.clone());
-    }
-
-    Some(locale_data)
+/// 内嵌语言包：编译期打包进二进制，避免安装后找不到 locales 目录
+/// 导致托盘菜单语言无法跟随切换。
+fn embedded_locale(locale: &str) -> Option<&'static str> {
+    Some(match locale {
+        "zh-CN" => include_str!("../locales/zh-CN.toml"),
+        "zh-TW" => include_str!("../locales/zh-TW.toml"),
+        "en" => include_str!("../locales/en.toml"),
+        "de-DE" => include_str!("../locales/de-DE.toml"),
+        "fr-FR" => include_str!("../locales/fr-FR.toml"),
+        "it-IT" => include_str!("../locales/it-IT.toml"),
+        "ja-JP" => include_str!("../locales/ja-JP.toml"),
+        "ko-KR" => include_str!("../locales/ko-KR.toml"),
+        "ko-KP" => include_str!("../locales/ko-KP.toml"),
+        "nl-NL" => include_str!("../locales/nl-NL.toml"),
+        "ru-RU" => include_str!("../locales/ru-RU.toml"),
+        _ => return None,
+    })
 }
 
-/// 获取语言文件路径
-fn get_locale_path(locale: &str) -> Option<PathBuf> {
-    // 尝试从应用资源目录加载
-    if let Ok(app_dir) = std::env::current_exe() {
-        let locales_dir = app_dir
-            .parent()?
-            .join("locales")
-            .join(format!("{}.toml", locale));
-        if locales_dir.exists() {
-            return Some(locales_dir);
-        }
-    }
-
-    // 开发模式下从项目目录加载
-    let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").ok()?;
-    let path = PathBuf::from(manifest_dir)
-        .join("locales")
-        .join(format!("{}.toml", locale));
-    if path.exists() {
-        return Some(path);
-    }
-
-    None
+/// 加载指定语言的翻译
+pub fn load_locale(locale: &str) -> Option<Locale> {
+    toml::from_str(embedded_locale(locale)?).ok()
 }
 
 /// 设置当前语言
@@ -122,4 +88,28 @@ pub fn is_locale_supported(locale: &str) -> bool {
             | "nl-NL"
             | "ru-RU"
     )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// 每个受支持的语言都必须能解析出非空的托盘翻译，否则托盘会退回中文兜底。
+    #[test]
+    fn all_supported_locales_load_tray_translations() {
+        for code in [
+            "zh-CN", "zh-TW", "en", "de-DE", "fr-FR", "it-IT", "ja-JP", "ko-KR", "ko-KP", "nl-NL",
+            "ru-RU",
+        ] {
+            assert!(is_locale_supported(code), "{code} should be supported");
+            let data = load_locale(code).unwrap_or_else(|| panic!("{code} failed to load"));
+            assert!(!data.tray.quit.trim().is_empty(), "{code} tray.quit is empty");
+        }
+    }
+
+    #[test]
+    fn unsupported_locale_is_rejected() {
+        assert!(load_locale("xx-XX").is_none());
+        assert!(set_locale("xx-XX").is_err());
+    }
 }
