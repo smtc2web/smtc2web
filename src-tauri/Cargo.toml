@@ -34,13 +34,18 @@ tauri = {version = "2", features = ["tray-icon", "image-png"] }
 
 tokio = {version = "1", features = ["rt-multi-thread", "macros", "sync", "time"] }
 toml = "0.8"
-warp = "0.3"
+# 0.4 使用 hyper 1.x / h2 0.4，修复 RUSTSEC-2026-0258（h2 无界空 DATA 帧）。
+warp = { version = "0.4", features = ["server"] }
 chrono = "0.4"
 named-lock = "0.4"
 
-zip = "0.6"
+# 9.x 修复 zip 的三条路径处理公告；仅启用解压所需的 deflate。
+zip = { version = "9.1", default-features = false, features = ["deflate-flate2-zlib-rs"] }
 
-tauri-plugin-updater = "2"
+# 本项目的更新包是 NSIS/.exe、deb、rpm，不使用 zip 更新包，
+# 因此关闭默认的 zip 特性，避免引入受影响的 zip 4.x 与不需要的 tar 解压代码。
+tauri-plugin-updater = { version = "2", default-features = false, features = ["rustls-tls", "system-proxy"] }
+url = "2"
 ttf-parser = "0.25"
 tokio-stream = { version = "0.1", features = ["sync"] }
 

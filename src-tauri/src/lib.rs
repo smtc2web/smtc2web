@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use std::net::{IpAddr, SocketAddr};
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex, RwLock};
-use std::time::Duration;
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use tauri::{Manager, Runtime, WebviewWindow, WebviewWindowBuilder};
 use tokio::sync::{broadcast, oneshot};
 use tokio_stream::StreamExt;
@@ -168,7 +168,7 @@ fn handle_now(s: &Shared) -> warp::reply::Response {
         }
     };
 
-    let mut resp = warp::reply::Response::new(warp::hyper::Body::from(body));
+    let mut resp = warp::reply::Response::new(body.into());
     resp.headers_mut().insert(
         "content-type",
         "application/json".parse().expect("content-type header"),
@@ -338,6 +338,7 @@ async fn start_server(
     theme::set_active_theme_path(theme_server_path(&current_theme));
 
     let api = warp::path!("api" / "now")
+        .and(warp::get())
         .and(with_state(state.clone()))
         .map(|s: Shared| handle_now(&s));
 
@@ -355,31 +356,46 @@ async fn start_server(
     });
 
     let theme_files = warp::path("theme")
+        .and(warp::get())
         .and(warp::path::tail())
         .and_then(theme::serve_theme_file);
 
-    let static_files = warp::path::tail().and_then(theme::serve_theme_file);
+    let static_files = warp::get()
+        .and(warp::path::tail())
+        .and_then(theme::serve_theme_file);
 
     let routes = api.or(reload).or(theme_files).or(static_files);
     let addr = SocketAddr::new(address, port);
 
+    if !address.is_loopback() {
+        log_warn!(
+            "Web 服务器绑定到非回环地址 {}，局域网内可无鉴权访问媒体信息与主题文件",
+            address
+        );
+    }
+
     // 绑定失败时短暂重试：重载场景下旧连接释放端口可能存在延迟。
     let mut last_err = String::new();
     for _ in 0..10 {
-        let (tx, rx) = oneshot::channel::<()>();
-        match warp::serve(routes.clone()).try_bind_with_graceful_shutdown(addr, async move {
-            let _ = rx.await;
-        }) {
-            Ok((_, server)) => {
-                let server_handle = tokio::spawn(server);
-                log_info!("Web 服务器已启动: http://{}:{}", address, port);
-                return Ok((tx, server_handle));
-            }
+        let listener = match tokio::net::TcpListener::bind(addr).await {
+            Ok(listener) => listener,
             Err(e) => {
                 last_err = e.to_string();
                 tokio::time::sleep(Duration::from_millis(150)).await;
+                continue;
             }
-        }
+        };
+
+        let (tx, rx) = oneshot::channel::<()>();
+        let server = warp::serve(routes.clone())
+            .incoming(listener)
+            .graceful(async move {
+                let _ = rx.await;
+            });
+
+        let server_handle = tokio::spawn(server.run());
+        log_info!("Web 服务器已启动: http://{}:{}", address, port);
+        return Ok((tx, server_handle));
     }
 
     Err(format!("无法绑定 {}：{}", addr, last_err))
@@ -430,7 +446,11 @@ async fn set_theme(theme_name: String) -> Result<(), String> {
     // 通知所有已打开的主题页面刷新，加载新主题。
     match LIVE_TX.send(LiveMsg::Reload) {
         Ok(receivers) => {
-            log_info!("主题已切换为 {}，已向 {} 个主题页面广播刷新命令", theme_name, receivers);
+            log_info!(
+                "主题已切换为 {}，已向 {} 个主题页面广播刷新命令",
+                theme_name,
+                receivers
+            );
         }
         Err(_) => {
             log_info!("主题已切换为 {}，当前没有已连接的主题页面", theme_name);
@@ -450,21 +470,45 @@ async fn upload_theme(file_path: String) -> Result<String, String> {
 async fn upload_theme_from_bytes(file_name: String, file_data: Vec<u8>) -> Result<String, String> {
     use std::io::Write;
 
-    let temp_dir = std::env::temp_dir();
-    let temp_file_path = temp_dir.join(&file_name);
+    // 只取文件名部分，防止前端传入 "../.." 等路径在临时目录外写文件。
+    let file_name = std::path::Path::new(&file_name)
+        .file_name()
+        .and_then(|name| name.to_str())
+        .ok_or_else(|| "无效的文件名".to_string())?;
+    if !file_name.to_ascii_lowercase().ends_with(".zip") {
+        return Err("只支持 .zip 主题压缩包".to_string());
+    }
+    let theme_name = std::path::Path::new(file_name)
+        .file_stem()
+        .and_then(|name| name.to_str())
+        .ok_or_else(|| "无效的文件名".to_string())?;
 
-    let mut temp_file =
-        std::fs::File::create(&temp_file_path).map_err(|e| format!("创建临时文件失败: {}", e))?;
-    temp_file
-        .write_all(&file_data)
-        .map_err(|e| format!("写入临时文件失败: {}", e))?;
+    // 使用不可预测且 create_new 的临时文件，避免覆盖已有文件或符号链接。
+    let nanos = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|d| d.as_nanos())
+        .unwrap_or(0);
+    let temp_file_path = std::env::temp_dir().join(format!(
+        "smtc2web-theme-{}-{}.zip",
+        std::process::id(),
+        nanos
+    ));
 
-    let theme_name = theme_manager::ThemeManager::extract_theme(&temp_file_path)
-        .map_err(|e| format!("解压主题失败: {}", e))?;
+    let mut temp_file = std::fs::OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(&temp_file_path)
+        .map_err(|e| format!("创建临时文件失败: {}", e))?;
+    if let Err(e) = temp_file.write_all(&file_data) {
+        let _ = std::fs::remove_file(&temp_file_path);
+        return Err(format!("写入临时文件失败: {}", e));
+    }
+    drop(temp_file);
 
+    let result = theme_manager::ThemeManager::extract_theme_as(&temp_file_path, theme_name);
     let _ = std::fs::remove_file(&temp_file_path);
 
-    Ok(theme_name)
+    result.map_err(|e| format!("解压主题失败: {}", e))
 }
 
 #[tauri::command]
@@ -607,7 +651,14 @@ async fn save_config(config_dto: ConfigDto) -> Result<(), String> {
         };
 
         (
-            old_theme, new_theme, should_reload, old_tx, old_handle, shared, old_address, old_port,
+            old_theme,
+            new_theme,
+            should_reload,
+            old_tx,
+            old_handle,
+            shared,
+            old_address,
+            old_port,
         )
     };
 
@@ -752,7 +803,11 @@ async fn window_is_maximized(window: tauri::WebviewWindow) -> Result<bool, Strin
 
 #[tauri::command]
 async fn open_url(url: String) -> Result<(), String> {
-    open::that(&url).map_err(|e| e.to_string())
+    let parsed = url::Url::parse(url.trim()).map_err(|_| "无效的链接".to_string())?;
+    if !matches!(parsed.scheme(), "http" | "https" | "mailto") {
+        return Err("只允许打开 http/https/mailto 链接".to_string());
+    }
+    open::that(parsed.as_str()).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
@@ -881,9 +936,9 @@ pub fn run() {
     }
 
     let state_for_server = state.clone();
-    let (server_tx, server_handle) = match runtime.block_on(async {
-        start_server(state_for_server, address, port, current_theme).await
-    }) {
+    let (server_tx, server_handle) = match runtime
+        .block_on(async { start_server(state_for_server, address, port, current_theme).await })
+    {
         Ok(server) => server,
         Err(e) => {
             log_error!("启动 Web 服务器失败: {}", e);
@@ -980,7 +1035,10 @@ pub fn run() {
         .run(|_app_handle, event| {
             // 轻量模式销毁最后一个窗口时会请求退出；拦截以继续驻留托盘。
             // code 为 Some 的是 app.exit()/restart() 等主动退出，需放行。
-            if let tauri::RunEvent::ExitRequested { code: None, api, .. } = event {
+            if let tauri::RunEvent::ExitRequested {
+                code: None, api, ..
+            } = event
+            {
                 api.prevent_exit();
             }
         });

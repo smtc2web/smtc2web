@@ -177,5 +177,6 @@ jobs:
             else
               key="$VERSION/$name"
             fi
-            npx --yes wrangler@latest r2 object put "$R2_BUCKET/$key" --file="$f" --content-type="$ct" --remote
+            # 固定版本，避免在持有 Cloudflare 凭据的发布任务中执行未固定的 latest 包。
+            npx --yes wrangler@4.153.0 r2 object put "$R2_BUCKET/$key" --file="$f" --content-type="$ct" --remote
           done

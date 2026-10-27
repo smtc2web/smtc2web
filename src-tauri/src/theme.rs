@@ -92,6 +92,15 @@ pub async fn serve_theme_file(tail: Tail) -> Result<impl warp::Reply, warp::Reje
     let path = tail.as_str();
     let path = if path.is_empty() { "index.html" } else { path };
 
+    // 不提供隐藏文件/目录（尤其是 Git 主题的 `.git/config`），
+    // 避免通过本地 HTTP 服务泄露仓库元数据或凭据。
+    if path
+        .split(['/', '\\'])
+        .any(|segment| segment.starts_with('.') && segment.len() > 1)
+    {
+        return Err(warp::reject::not_found());
+    }
+
     let theme_path = active_theme_path();
     let has_custom_theme =
         !theme_path.to_string_lossy().is_empty() && theme_path.components().next().is_some();
@@ -130,8 +139,12 @@ fn make_response(content: Vec<u8>, mime: String) -> impl warp::Reply {
     // HTML 不做缓存：切换主题后刷新即可拿到新主题的页面。
     let cache_control = if is_html { "no-store" } else { "no-cache" };
     warp::reply::with_header(
-        warp::reply::with_header(body, "content-type", mime),
-        "cache-control",
-        cache_control,
+        warp::reply::with_header(
+            warp::reply::with_header(body, "content-type", mime),
+            "cache-control",
+            cache_control,
+        ),
+        "x-content-type-options",
+        "nosniff",
     )
 }
