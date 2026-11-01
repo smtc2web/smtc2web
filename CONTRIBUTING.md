@@ -21,4 +21,4 @@
 
 ## 协作链接
 
-- https://zed.dev/channel/smtc2web-31825
+- https://smtc2web.zulipchat.com
