@@ -1,0 +1,4 @@
+# 本地开发环境由 mise 接管;Rust 工具链仍使用 rustup(见 wiki/compile)
+[tools]
+node = "24.22.2"
+pnpm = "12.16.1"

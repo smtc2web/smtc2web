@@ -44,12 +44,8 @@ jobs:
             libayatana-appindicator3-dev \
             librsvg2-dev
 
-      - name: setup volta
-        uses: volta-cli/action@v5.0.0
-        with:
-          node-version: 24
-
-      - uses: pnpm/action-setup@v6
+      - name: setup mise
+        uses: jdx/mise-action@v5
 
       - name: install Rust stable
         uses: dtolnay/rust-toolchain@stable
@@ -107,12 +103,8 @@ jobs:
             libayatana-appindicator3-dev \
             librsvg2-dev
 
-      - name: setup volta
-        uses: volta-cli/action@v5.0.0
-        with:
-          node-version: 24
-
-      - uses: pnpm/action-setup@v6
+      - name: setup mise
+        uses: jdx/mise-action@v5
 
       - name: install Rust stable
         uses: dtolnay/rust-toolchain@stable
@@ -146,12 +138,8 @@ jobs:
         with:
           submodules: "recursive"
 
-      - name: setup volta
-        uses: volta-cli/action@v5.0.0
-        with:
-          node-version: 24
-
-      - uses: pnpm/action-setup@v6
+      - name: setup mise
+        uses: jdx/mise-action@v5
 
       - name: install frontend dependencies
         run: pnpm install

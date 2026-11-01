@@ -1,0 +1,314 @@
+[
+  {
+    "pkg": {
+      "name": "anyhow",
+      "version": "1.0.102"
+    },
+    "vulns": [
+      {
+        "id": "RUSTSEC-2026-0190",
+        "modified": "2026-06-29T14:15:03.650725Z"
+      }
+    ]
+  },
+  {
+    "pkg": {
+      "name": "block-buffer",
+      "version": "0.10.4"
+    },
+    "vulns": [
+      {
+        "id": "GHSA-qwgh-2vcv-g2f7",
+        "modified": "2026-08-19T19:30:06.686866Z"
+      }
+    ]
+  },
+  {
+    "pkg": {
+      "name": "glib",
+      "version": "0.18.5"
+    },
+    "vulns": [
+      {
+        "id": "GHSA-wrw7-89jp-8q8g",
+        "modified": "2025-10-28T06:29:26.473225Z"
+      },
+      {
+        "id": "RUSTSEC-2024-0429",
+        "modified": "2025-10-28T06:29:26.473225Z"
+      }
+    ]
+  },
+  {
+    "pkg": {
+      "name": "h2",
+      "version": "0.3.27"
+    },
+    "vulns": [
+      {
+        "id": "RUSTSEC-2026-0258",
+        "modified": "2026-10-12T18:00:10.934581Z"
+      }
+    ]
+  },
+  {
+    "pkg": {
+      "name": "proc-macro-error",
+      "version": "1.0.4"
+    },
+    "vulns": [
+      {
+        "id": "RUSTSEC-2024-0370",
+        "modified": "2026-06-07T20:00:03.923932Z"
+      }
+    ]
+  },
+  {
+    "pkg": {
+      "name": "quick-xml",
+      "version": "0.38.4"
+    },
+    "vulns": [
+      {
+        "id": "RUSTSEC-2026-0194",
+        "modified": "2026-07-02T08:00:03.849273Z"
+      },
+      {
+        "id": "RUSTSEC-2026-0195",
+        "modified": "2026-07-02T09:00:04.037478Z"
+      }
+    ]
+  },
+  {
+    "pkg": {
+      "name": "rustls",
+      "version": "0.23.41"
+    },
+    "vulns": [
+      {
+        "id": "GHSA-2mjx-qc3c-rqvc",
+        "modified": "2026-10-05T23:45:08.859781Z"
+      },
+      {
+        "id": "RUSTSEC-2026-0285",
+        "modified": "2026-10-12T18:00:10.944958Z"
+      },
+      {
+        "id": "RUSTSEC-2026-0346",
+        "modified": "2026-10-14T13:30:02.480694Z"
+      },
+      {
+        "id": "RUSTSEC-2026-0348",
+        "modified": "2026-10-14T13:30:02.480925Z"
+      },
+      {
+        "id": "RUSTSEC-2026-0349",
+        "modified": "2026-10-14T13:30:02.475705Z"
+      }
+    ]
+  },
+  {
+    "pkg": {
+      "name": "rustls-webpki",
+      "version": "0.103.13"
+    },
+    "vulns": [
+      {
+        "id": "RUSTSEC-2026-0382",
+        "modified": "2026-10-21T00:55:56.763143Z"
+      }
+    ]
+  },
+  {
+    "pkg": {
+      "name": "tokio",
+      "version": "1.50.0"
+    },
+    "vulns": [
+      {
+        "id": "RUSTSEC-2026-0386",
+        "modified": "2026-10-23T14:45:03.847864Z"
+      }
+    ]
+  },
+  {
+    "pkg": {
+      "name": "ttf-parser",
+      "version": "0.25.1"
+    },
+    "vulns": [
+      {
+        "id": "RUSTSEC-2026-0192",
+        "modified": "2026-06-29T21:15:04.384453Z"
+      }
+    ]
+  },
+  {
+    "pkg": {
+      "name": "unic-char-property",
+      "version": "0.9.0"
+    },
+    "vulns": [
+      {
+        "id": "RUSTSEC-2025-0081",
+        "modified": "2025-10-21T11:12:59Z"
+      }
+    ]
+  },
+  {
+    "pkg": {
+      "name": "unic-char-range",
+      "version": "0.9.0"
+    },
+    "vulns": [
+      {
+        "id": "RUSTSEC-2025-0075",
+        "modified": "2025-10-22T14:41:04Z"
+      }
+    ]
+  },
+  {
+    "pkg": {
+      "name": "unic-common",
+      "version": "0.9.0"
+    },
+    "vulns": [
+      {
+        "id": "RUSTSEC-2025-0080",
+        "modified": "2025-10-21T11:12:59Z"
+      }
+    ]
+  },
+  {
+    "pkg": {
+      "name": "unic-ucd-ident",
+      "version": "0.9.0"
+    },
+    "vulns": [
+      {
+        "id": "RUSTSEC-2025-0100",
+        "modified": "2025-10-21T11:12:59Z"
+      }
+    ]
+  },
+  {
+    "pkg": {
+      "name": "unic-ucd-version",
+      "version": "0.9.0"
+    },
+    "vulns": [
+      {
+        "id": "RUSTSEC-2025-0098",
+        "modified": "2025-10-21T11:12:59Z"
+      }
+    ]
+  },
+  {
+    "pkg": {
+      "name": "webpki-root-certs",
+      "version": "1.0.9"
+    },
+    "vulns": [
+      {
+        "id": "RUSTSEC-2026-0383",
+        "modified": "2026-10-21T06:30:02.691648Z"
+      }
+    ]
+  },
+  {
+    "pkg": {
+      "name": "zip",
+      "version": "0.6.6"
+    },
+    "vulns": [
+      {
+        "id": "RUSTSEC-2026-0367",
+        "modified": "2026-10-16T23:30:02.392172Z"
+      },
+      {
+        "id": "RUSTSEC-2026-0368",
+        "modified": "2026-10-16T23:30:02.383750Z"
+      },
+      {
+        "id": "RUSTSEC-2026-0369",
+        "modified": "2026-10-16T23:30:02.387698Z"
+      }
+    ]
+  },
+  {
+    "pkg": {
+      "name": "zip",
+      "version": "4.6.1"
+    },
+    "vulns": [
+      {
+        "id": "RUSTSEC-2026-0367",
+        "modified": "2026-10-16T23:30:02.392172Z"
+      },
+      {
+        "id": "RUSTSEC-2026-0368",
+        "modified": "2026-10-16T23:30:02.383750Z"
+      },
+      {
+        "id": "RUSTSEC-2026-0369",
+        "modified": "2026-10-16T23:30:02.387698Z"
+      }
+    ]
+  },
+  {
+    "pkg": {
+      "name": "zstd-safe",
+      "version": "5.0.2+zstd.1.5.2"
+    },
+    "vulns": [
+      {
+        "id": "RUSTSEC-2026-0395",
+        "modified": "2026-10-26T14:00:06.388344Z"
+      },
+      {
+        "id": "RUSTSEC-2026-0397",
+        "modified": "2026-10-26T14:00:05.089587Z"
+      },
+      {
+        "id": "RUSTSEC-2026-0399",
+        "modified": "2026-10-26T14:00:05.792431Z"
+      },
+      {
+        "id": "RUSTSEC-2026-0400",
+        "modified": "2026-10-26T14:00:05.692077Z"
+      },
+      {
+        "id": "RUSTSEC-2026-0401",
+        "modified": "2026-10-26T14:00:04.231502Z"
+      },
+      {
+        "id": "RUSTSEC-2026-0402",
+        "modified": "2026-10-26T14:00:05.685817Z"
+      },
+      {
+        "id": "RUSTSEC-2026-0403",
+        "modified": "2026-10-26T14:00:05.787441Z"
+      },
+      {
+        "id": "RUSTSEC-2026-0404",
+        "modified": "2026-10-26T14:00:05.092817Z"
+      },
+      {
+        "id": "RUSTSEC-2026-0406",
+        "modified": "2026-10-26T14:00:05.095427Z"
+      }
+    ]
+  },
+  {
+    "pkg": {
+      "name": "zstd-sys",
+      "version": "2.0.16+zstd.1.5.7"
+    },
+    "vulns": [
+      {
+        "id": "RUSTSEC-2026-0410",
+        "modified": "2026-10-26T14:00:05.788985Z"
+      }
+    ]
+  }
+]
