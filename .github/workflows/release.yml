@@ -50,7 +50,8 @@ jobs:
             libxdo-dev \
             libssl-dev \
             libayatana-appindicator3-dev \
-            librsvg2-dev
+            librsvg2-dev \
+            libfuse2
 
       - name: setup mise
         uses: jdx/mise-action@v5
@@ -117,8 +118,10 @@ jobs:
             { installer: 'smtc2web_' + version + '_arm64-setup.exe', keys: ['windows-aarch64', 'windows-aarch64-nsis'] },
             { installer: 'smtc2web_' + version + '_amd64.deb', keys: ['linux-x86_64', 'linux-x86_64-deb'] },
             { installer: 'smtc2web-' + version + '-1.x86_64.rpm', keys: ['linux-x86_64-rpm'] },
+            { installer: 'smtc2web_' + version + '_amd64.AppImage', keys: ['linux-x86_64-appimage'] },
             { installer: 'smtc2web_' + version + '_arm64.deb', keys: ['linux-aarch64', 'linux-aarch64-deb'] },
             { installer: 'smtc2web-' + version + '-1.aarch64.rpm', keys: ['linux-aarch64-rpm'] },
+            { installer: 'smtc2web_' + version + '_arm64.AppImage', keys: ['linux-aarch64-appimage'] },
           ];
 
           for (const entry of entries) {

@@ -40,7 +40,7 @@
   "bundle": {
     "active": true,
     "createUpdaterArtifacts": true,
-    "targets": ["nsis", "deb", "rpm"],
+    "targets": ["nsis", "deb", "rpm", "appimage"],
     "icon": ["icons/icon.png", "icons/icon.ico"],
     "windows": {
       "nsis": {
