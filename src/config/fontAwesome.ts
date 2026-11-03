@@ -24,6 +24,8 @@ import {
   faStore,
   faTag,
   faExternalLink,
+  faGlobe,
+  faBook,
 } from "@fortawesome/free-solid-svg-icons";
 
 // Add icons to the library
@@ -51,4 +53,6 @@ library.add(
   faStore,
   faTag,
   faExternalLink,
+  faGlobe,
+  faBook,
 );

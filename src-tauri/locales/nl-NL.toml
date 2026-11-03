@@ -1,5 +1,4 @@
 [tray]
-show_window = "Venster tonen"
 open_web = "Web openen"
 check_update = "Controleren op updates"
 quit = "Afsluiten"

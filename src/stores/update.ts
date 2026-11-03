@@ -27,7 +27,7 @@ export const useUpdateStore = defineStore("update", () => {
   const downloadError = ref<string | null>(null);
   const progress = ref<UpdateProgress | null>(null);
 
-  async function checkForUpdates(): Promise<UpdateCheckResult | null> {
+  async function checkForUpdates(forceDialog = false): Promise<UpdateCheckResult | null> {
     if (!hasTauri()) return null;
     checking.value = true;
     downloadError.value = null;
@@ -35,7 +35,8 @@ export const useUpdateStore = defineStore("update", () => {
     try {
       const result = await tauriInvoke<UpdateCheckResult>("check_update");
       lastResult.value = result;
-      if (result.has_update || result.error) {
+      // 手动触发（如托盘菜单）时总是展示结果对话框，让用户得到明确反馈。
+      if (forceDialog || result.has_update || result.error) {
         showDialog.value = true;
       }
       return result;
@@ -48,6 +49,9 @@ export const useUpdateStore = defineStore("update", () => {
         notes: null,
         error: String(e),
       };
+      if (forceDialog) {
+        showDialog.value = true;
+      }
       return lastResult.value;
     } finally {
       checking.value = false;

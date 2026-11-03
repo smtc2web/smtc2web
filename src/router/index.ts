@@ -4,6 +4,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 const ThemesView = () => import('@/views/ThemesView.vue')
 const ThemeStoreView = () => import('@/views/ThemeStoreView.vue')
 const SettingsView = () => import('@/views/SettingsView.vue')
+const AboutView = () => import('@/views/AboutView.vue')
 
 const router = createRouter({
   history: createWebHistory(),
@@ -26,6 +27,11 @@ const router = createRouter({
       path: '/settings',
       name: 'settings',
       component: SettingsView
+    },
+    {
+      path: '/about',
+      name: 'about',
+      component: AboutView
     }
   ]
 })

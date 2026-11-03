@@ -1,5 +1,4 @@
 [tray]
-show_window = "Afficher la fenêtre"
 open_web = "Ouvrir le web"
 check_update = "Rechercher les mises à jour"
 quit = "Quitter"

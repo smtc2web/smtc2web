@@ -2,12 +2,19 @@ use crate::i18n::{get_current_locale_data, set_locale};
 use crate::{log_info, log_warn};
 use std::process;
 use std::sync::Mutex;
+use std::sync::atomic::{AtomicBool, Ordering};
 use tauri::menu::{Menu, MenuItem};
-use tauri::tray::{TrayIconBuilder, TrayIconEvent};
-use tauri::{AppHandle, Emitter, Runtime};
+use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
+use tauri::{AppHandle, Emitter, Manager, Runtime};
 
 /// 全局端口存储，用于重建菜单
 static TRAY_PORT: std::sync::LazyLock<Mutex<u16>> = std::sync::LazyLock::new(|| Mutex::new(3030));
+
+/// 轻量模式下窗口被销毁时，托盘「检查更新」的待办标记。
+///
+/// 重建窗口后前端需要时间挂载并注册事件监听，直接 emit 可能丢失。
+/// 因此改由前端就绪后调用 `take_pending_update_check` 主动取走并触发检查。
+pub(crate) static PENDING_TRAY_UPDATE_CHECK: AtomicBool = AtomicBool::new(false);
 
 /// 创建托盘菜单（根据当前语言）
 pub fn create_tray_menu<R: Runtime>(app: &AppHandle<R>) -> Menu<R> {
@@ -15,20 +22,11 @@ pub fn create_tray_menu<R: Runtime>(app: &AppHandle<R>) -> Menu<R> {
     let translations = get_current_locale_data()
         .map(|l| l.tray)
         .unwrap_or_else(|| crate::i18n::TrayTranslations {
-            show_window: "显示窗口".to_string(),
             open_web: "打开网页".to_string(),
             check_update: "检查更新".to_string(),
             quit: "退出应用".to_string(),
         });
 
-    let show_window = MenuItem::with_id(
-        app,
-        "show_window",
-        translations.show_window,
-        true,
-        None::<&str>,
-    )
-    .unwrap();
     let open_web =
         MenuItem::with_id(app, "open_web", translations.open_web, true, None::<&str>).unwrap();
     let check_update = MenuItem::with_id(
@@ -41,7 +39,7 @@ pub fn create_tray_menu<R: Runtime>(app: &AppHandle<R>) -> Menu<R> {
     .unwrap();
     let quit = MenuItem::with_id(app, "quit", translations.quit, true, None::<&str>).unwrap();
 
-    Menu::with_items(app, &[&show_window, &open_web, &check_update, &quit]).unwrap()
+    Menu::with_items(app, &[&open_web, &check_update, &quit]).unwrap()
 }
 
 /// 处理托盘菜单事件
@@ -51,9 +49,6 @@ pub fn handle_tray_menu_event<R: Runtime>(
     port: u16,
 ) {
     match event.id.as_ref() {
-        "show_window" => {
-            crate::show_main_window(app);
-        }
         "open_web" => {
             let url = format!("http://localhost:{}", port);
             if let Err(e) = open::that(&url) {
@@ -61,7 +56,18 @@ pub fn handle_tray_menu_event<R: Runtime>(
             }
         }
         "check_update" => {
-            let _ = app.emit("check-update", ());
+            log_info!("托盘菜单：检查更新");
+            // 先显示主窗口，确保更新结果对话框对用户可见。
+            if app.get_webview_window("main").is_some() {
+                // 窗口仍存活（仅隐藏到托盘）：监听已注册，可直接通知前端。
+                crate::show_main_window(app);
+                let _ = app.emit("check-update", ());
+            } else {
+                // 轻量模式下窗口已被销毁：等前端重建并注册监听后，
+                // 由前端调用 `take_pending_update_check` 取走待办并触发检查。
+                PENDING_TRAY_UPDATE_CHECK.store(true, Ordering::SeqCst);
+                crate::show_main_window(app);
+            }
         }
         "quit" => {
             process::exit(0);
@@ -70,9 +76,14 @@ pub fn handle_tray_menu_event<R: Runtime>(
     }
 }
 
-/// 处理托盘图标事件（双击显示窗口）
+/// 处理托盘图标事件：左键单击显示主窗口（右键由系统弹出菜单）
 fn handle_tray_icon_event<R: Runtime>(app: &AppHandle<R>, event: TrayIconEvent) {
-    if let TrayIconEvent::DoubleClick { .. } = event {
+    if let TrayIconEvent::Click {
+        button: MouseButton::Left,
+        button_state: MouseButtonState::Up,
+        ..
+    } = event
+    {
         crate::show_main_window(app);
     }
 }
@@ -93,7 +104,8 @@ pub fn create_tray_icon<R: Runtime>(app: &AppHandle<R>, port: u16) -> Result<(),
     TrayIconBuilder::with_id("main-tray")
         .icon(app.default_window_icon().unwrap().clone())
         .menu(&tray_menu)
-        .show_menu_on_left_click(true)
+        // 右键显示菜单，左键由下方 on_tray_icon_event 处理为显示主窗口。
+        .show_menu_on_left_click(false)
         .on_menu_event(move |app, event| {
             let port = *TRAY_PORT.lock().unwrap();
             handle_tray_menu_event(app, event, port);

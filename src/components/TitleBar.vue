@@ -17,6 +17,10 @@
                 <span class="tab-icon"><font-awesome-icon icon="gear" /></span>
                 <span class="tab-label">{{ t("nav.settings") }}</span>
             </RouterLink>
+            <RouterLink to="/about" class="titlebar-tab" active-class="active">
+                <span class="tab-icon"><font-awesome-icon icon="info-circle" /></span>
+                <span class="tab-label">{{ t("nav.about") }}</span>
+            </RouterLink>
         </nav>
         <div class="titlebar-controls">
             <button class="titlebar-btn" @mousedown.prevent="minimize" :title="t('titlebar.minimize')">

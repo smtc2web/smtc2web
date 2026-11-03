@@ -2,7 +2,21 @@
   "nav": {
     "themes": "主题",
     "store": "商店",
-    "settings": "设置"
+    "settings": "设置",
+    "about": "关于"
+  },
+  "about": {
+    "title": "关于",
+    "version": "版本",
+    "description": "将 Windows SMTC / Linux MPRIS 的媒体信息实时同步到浏览器，适用于 OBS 浏览器源等场景。",
+    "links": {
+      "github": "GitHub 仓库",
+      "website": "官方网站",
+      "store": "主题商店",
+      "docs": "编译文档"
+    },
+    "license": "本项目以 MIT 许可证开源发布。",
+    "copyright": "© {year} smtc2web contributors"
   },
   "themes": {
     "title": "主题列表",

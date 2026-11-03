@@ -5,15 +5,53 @@ import { useToastStore } from "./toast";
 import type { Theme, GitThemeInfo } from "@/types/theme";
 import { hasTauri, tauriInvoke } from "@/utils";
 
+interface PreloadedThemeData {
+  themes: Theme[];
+  currentTheme: string;
+  gitThemes: Record<string, GitThemeInfo>;
+}
+
+/**
+ * 启动阶段预取的主题数据。
+ *
+ * 刻意不依赖 Pinia / i18n，因此可以在 `main.ts` 中（组件挂载前）安全调用，
+ * 让窗口显示时主题列表已经就绪，不会先闪一下骨架屏或空状态。
+ */
+let preloaded: PreloadedThemeData | null = null;
+
+export async function preloadThemeData(): Promise<void> {
+  if (!hasTauri()) return;
+
+  try {
+    const [themes, currentTheme, gitThemes] = await Promise.all([
+      tauriInvoke<Theme[]>("get_themes"),
+      tauriInvoke<string>("get_current_theme"),
+      tauriInvoke<Record<string, GitThemeInfo>>("get_git_themes"),
+    ]);
+    preloaded = { themes, currentTheme, gitThemes };
+  } catch (e) {
+    console.error("预加载主题数据失败:", e);
+  }
+}
+
 export const useThemeStore = defineStore("theme", () => {
   const { t } = useI18n();
   const toast = useToastStore();
 
-  const themes = ref<Theme[]>([]);
-  const currentTheme = ref("");
-  const loading = ref(false);
+  const themes = ref<Theme[]>(preloaded?.themes ?? []);
+  const currentTheme = ref(preloaded?.currentTheme ?? "");
+  // 只有确实没有缓存数据时才展示骨架屏，避免已有数据时刷新造成闪烁。
+  const loading = ref(themes.value.length === 0);
   const uploadLoading = ref(false);
-  const gitThemes = ref<Record<string, GitThemeInfo>>({});
+  const gitThemes = ref<Record<string, GitThemeInfo>>(preloaded?.gitThemes ?? {});
+
+  // 启动时已经预取过数据，首次挂载时无需再重复请求（避免重复扫描主题目录）。
+  let hydrated = preloaded !== null;
+  function consumeHydrated(): boolean {
+    const value = hydrated;
+    hydrated = false;
+    return value;
+  }
 
   const hasThemes = computed(() => themes.value.length > 0);
 
@@ -29,7 +67,7 @@ export const useThemeStore = defineStore("theme", () => {
   ];
 
   async function loadThemes() {
-    loading.value = true;
+    loading.value = themes.value.length === 0;
     try {
       if (hasTauri()) {
         themes.value = await tauriInvoke<Theme[]>("get_themes");
@@ -230,6 +268,7 @@ export const useThemeStore = defineStore("theme", () => {
     uploadLoading,
     gitThemes,
     hasThemes,
+    consumeHydrated,
     loadThemes,
     loadCurrentTheme,
     loadGitThemes,

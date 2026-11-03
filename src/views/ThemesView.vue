@@ -77,6 +77,9 @@ const { themes, currentTheme, loading, uploadLoading, hasThemes } =
 const showGitDialog = ref(false);
 
 onMounted(async () => {
+    // 启动阶段已预取数据时跳过首次重复请求，避免二次扫描主题目录。
+    if (themeStore.consumeHydrated()) return;
+
     await Promise.all([
         themeStore.loadThemes(),
         themeStore.loadCurrentTheme(),

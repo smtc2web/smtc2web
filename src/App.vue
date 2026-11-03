@@ -1,5 +1,5 @@
 <template>
-    <div id="app">
+    <div class="app-shell">
         <TitleBar />
         <main class="page">
             <RouterView v-slot="{ Component, route }">
@@ -22,48 +22,51 @@ import { useUpdateStore, type UpdateProgress } from "@/stores/update";
 import TitleBar from "@/components/TitleBar.vue";
 import Toast from "@/components/Toast.vue";
 import UpdateDialog from "@/components/UpdateDialog.vue";
-import { hasTauri } from "@/utils";
+import { hasTauri, tauriInvoke } from "@/utils";
 
 const configStore = useConfigStore();
 const localeStore = useLocaleStore();
 const updateStore = useUpdateStore();
 const route = useRoute();
 
-// 页面切换动效：按导航顺序决定滑入方向（主题 -> 商店 -> 设置 依次向右）。
-const PAGE_ORDER: Record<string, number> = { themes: 0, store: 1, settings: 2 };
+// 配置已在挂载前加载完毕（见 main.ts），这里同步应用语言，
+// 保证首帧文案就是用户设置的语言，不会出现「先中文再切换」的闪烁。
+localeStore.initLocale();
+
+// 页面切换动效：按导航顺序决定滑入方向（主题 -> 商店 -> 设置 -> 关于 依次向右）。
+const PAGE_ORDER: Record<string, number> = { themes: 0, store: 1, settings: 2, about: 3 };
 const pageTransition = computed(() => {
     const name = String(route.name ?? "themes");
     return (PAGE_ORDER[name] ?? 0) >= 1 ? "page-next" : "page-prev";
 });
 
 onMounted(async () => {
-    await configStore.loadConfig();
-    localeStore.initLocale();
-
     if (configStore.config.auto_check_update) {
         setTimeout(() => updateStore.checkForUpdates(), 1000);
     }
 
     if (hasTauri()) {
-        import("@tauri-apps/api/event").then(({ listen }) => {
-            listen("check-update", () => updateStore.checkForUpdates());
-            listen<UpdateProgress>("update-progress", (e) =>
+        import("@tauri-apps/api/event").then(async ({ listen }) => {
+            await listen("check-update", () => updateStore.checkForUpdates(true));
+            await listen<UpdateProgress>("update-progress", (e) =>
                 updateStore.setProgress(e.payload),
             );
-        });
 
-        // 瞬间加载：初始化完成后显示窗口，避免白屏闪烁
-        import("@tauri-apps/api/webviewWindow").then(({ WebviewWindow }) => {
-            const win = WebviewWindow.getCurrent();
-            win.show();
+            // 轻量模式下托盘触发的检查：窗口重建并注册监听后取走待办，
+            // 避免事件在 WebView 就绪前发送而丢失。
+            const pending = await tauriInvoke<boolean>("take_pending_update_check");
+            if (pending) {
+                updateStore.checkForUpdates(true);
+            }
         });
     }
 });
 </script>
 
 <style>
-#app {
-    min-height: 100vh;
+.app-shell {
+    flex: 1;
+    min-height: 0;
     display: flex;
     flex-direction: column;
 }

@@ -1,5 +1,4 @@
 [tray]
-show_window = "창 보이기"
 open_web = "누리망 열기"
 check_update = "갱신 확인"
 quit = "종료"

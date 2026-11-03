@@ -4,7 +4,6 @@ use std::sync::Mutex;
 /// 托盘菜单翻译结构
 #[derive(Debug, Deserialize, Clone)]
 pub struct TrayTranslations {
-    pub show_window: String,
     pub open_web: String,
     pub check_update: String,
     pub quit: String,

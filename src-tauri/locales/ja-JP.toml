@@ -1,5 +1,4 @@
 [tray]
-show_window = "ウィンドウを表示"
 open_web = "Web を開く"
 check_update = "更新を確認"
 quit = "終了"

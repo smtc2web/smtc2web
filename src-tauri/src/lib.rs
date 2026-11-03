@@ -3,6 +3,7 @@
 use serde::{Deserialize, Serialize};
 use std::net::{IpAddr, SocketAddr};
 use std::path::PathBuf;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex, RwLock};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use tauri::{Emitter, Manager, Runtime, WebviewWindow, WebviewWindowBuilder};
@@ -56,6 +57,13 @@ struct AppState {
     server_address: Option<IpAddr>,
     server_port: u16,
 }
+
+/// 窗口刚创建、等待前端静态启动外壳绘制完成后再显示。
+///
+/// WebView 在窗口隐藏时不会提交帧，如果创建后立刻 `show()`，用户先看到的
+/// 是一片尚未渲染的空白表面。由 index.html 中的启动脚本在 DOM 就绪后调用
+/// `boot_shell_ready`，此时再显示，第一帧就是标题栏外壳。
+static PENDING_BOOT_SHOW: AtomicBool = AtomicBool::new(false);
 
 static CURRENT_APP_ID: std::sync::LazyLock<Mutex<String>> =
     std::sync::LazyLock::new(|| Mutex::new(String::new()));
@@ -768,6 +776,15 @@ async fn get_current_app_id() -> Result<String, String> {
     Ok(display_name.clone())
 }
 
+/// 前端挂载并注册事件监听后，取走托盘「检查更新」的待办标记。
+///
+/// 轻量模式下窗口可能已被销毁，重建窗口后直接 emit 事件会因监听尚未注册而丢失，
+/// 因此改由前端就绪后主动查询。
+#[tauri::command]
+fn take_pending_update_check() -> bool {
+    tray::PENDING_TRAY_UPDATE_CHECK.swap(false, std::sync::atomic::Ordering::SeqCst)
+}
+
 /// 清理历史遗留的开机自启动注册表项（开机自启动功能已移除）
 fn cleanup_autostart_registry() {
     #[cfg(target_os = "windows")]
@@ -958,6 +975,18 @@ async fn download_theme_from_store(
     }
 }
 
+/// 让窗口在 WebView 提交首帧之前就呈现与系统主题一致的底色。
+///
+/// 前端会等首帧内容就绪后才 `show()`，但 DWM 合成可能早于 WebView 首帧，
+/// 若不在暗色模式下预置底色，就会闪出一帧白色。
+fn apply_window_background<R: Runtime>(window: &WebviewWindow<R>) {
+    let color = match window.theme() {
+        Ok(tauri::Theme::Dark) => tauri::window::Color(14, 16, 19, 255),
+        _ => tauri::window::Color(247, 248, 250, 255),
+    };
+    let _ = window.set_background_color(Some(color));
+}
+
 /// Windows 11 圆角适配：通过 DWM API 为无边框窗口启用原生圆角
 #[cfg(target_os = "windows")]
 fn apply_window_rounded_corners<R: Runtime>(window: &WebviewWindow<R>) {
@@ -1005,6 +1034,40 @@ fn attach_close_behavior<R: Runtime>(window: &WebviewWindow<R>) {
     });
 }
 
+/// 前端静态启动外壳已解析完成，可以显示窗口了。
+///
+/// 由 index.html 中的 `boot.ts` 在 Vue 启动前调用。只有在窗口是「新建出来
+/// 等待显示」的状态下才会真正显示，避免误唤出启动时本应隐藏到托盘的窗口。
+#[tauri::command]
+fn boot_shell_ready(app: tauri::AppHandle) {
+    if !PENDING_BOOT_SHOW.swap(false, Ordering::SeqCst) {
+        return;
+    }
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.show();
+        let _ = window.set_focus();
+    }
+}
+
+/// 兜底：若页面加载失败（如 dev server 未启动），启动外壳永远不会就绪，
+/// 也不能让窗口一直不可见。超时后直接显示。
+///
+/// 用 swap 消费标记：外壳已经就绪时不会重复显示，也不会把用户在 3 秒内
+/// 主动关掉的窗口重新唤出。
+fn show_window_if_still_hidden<R: Runtime>(app: tauri::AppHandle<R>) {
+    std::thread::spawn(move || {
+        std::thread::sleep(Duration::from_secs(3));
+        if !PENDING_BOOT_SHOW.swap(false, Ordering::SeqCst) {
+            return;
+        }
+        if let Some(window) = app.get_webview_window("main") {
+            log_warn!("启动外壳未就绪，超时后直接显示窗口");
+            let _ = window.show();
+            let _ = window.set_focus();
+        }
+    });
+}
+
 /// 显示主窗口；若轻量模式下窗口已被销毁，则按 tauri.conf 配置重建。
 pub fn show_main_window<R: Runtime>(app: &tauri::AppHandle<R>) {
     if let Some(window) = app.get_webview_window("main") {
@@ -1021,9 +1084,15 @@ pub fn show_main_window<R: Runtime>(app: &tauri::AppHandle<R>) {
 
     match WebviewWindowBuilder::from_config(app, &config).and_then(|b| b.build()) {
         Ok(window) => {
+            apply_window_background(&window);
             #[cfg(target_os = "windows")]
             apply_window_rounded_corners(&window);
             attach_close_behavior(&window);
+
+            // 不立即 show：等前端启动外壳绘制完成后再显示，
+            // 否则会先露出 WebView 的空白表面。
+            PENDING_BOOT_SHOW.store(true, Ordering::SeqCst);
+            show_window_if_still_hidden(app.clone());
         }
         Err(e) => log_error!("重建主窗口失败: {}", e),
     }
@@ -1121,6 +1190,8 @@ pub fn run() {
             save_config,
             set_locale,
             get_current_app_id,
+            take_pending_update_check,
+            boot_shell_ready,
             updater::check_update,
             updater::start_update,
             window_minimize,
@@ -1146,10 +1217,12 @@ pub fn run() {
 
             let window = app.get_webview_window("main").unwrap();
 
-            // 标题栏：所有平台统一使用系统原生标题栏（tauri.conf.json 已配置
-            // decorations: true），此处不再做任何运行时装饰调整。
+            // 标题栏：使用前端自定义标题栏（tauri.conf.json 已配置 decorations: false）。
 
-            // Windows 11 圆角适配
+            // 预置与系统主题一致的底色，避免 WebView 首帧前白闪。
+            apply_window_background(&window);
+
+            // Windows 11 圆角适配：窗口圆角完全交给 DWM 绘制，避免与 CSS 圆角叠加。
             #[cfg(target_os = "windows")]
             apply_window_rounded_corners(&window);
 
@@ -1170,6 +1243,11 @@ pub fn run() {
                 if minimize_to_tray {
                     log_info!("启动时最小化至系统托盘");
                     let _ = window.hide();
+                } else {
+                    // 不立即显示：等前端启动外壳绘制完成后再显示，
+                    // 避免露出 WebView 的空白表面。
+                    PENDING_BOOT_SHOW.store(true, Ordering::SeqCst);
+                    show_window_if_still_hidden(app.handle().clone());
                 }
             }
 

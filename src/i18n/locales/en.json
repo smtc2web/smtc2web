@@ -2,7 +2,21 @@
   "nav": {
     "themes": "Themes",
     "store": "Store",
-    "settings": "Settings"
+    "settings": "Settings",
+    "about": "About"
+  },
+  "about": {
+    "title": "About",
+    "version": "Version",
+    "description": "Syncs media info from Windows SMTC / Linux MPRIS to your browser in real time — ideal for OBS browser sources.",
+    "links": {
+      "github": "GitHub Repository",
+      "website": "Official Website",
+      "store": "Theme Store",
+      "docs": "Build Documentation"
+    },
+    "license": "Released under the MIT License.",
+    "copyright": "© {year} smtc2web contributors"
   },
   "themes": {
     "title": "Theme List",

@@ -33,7 +33,6 @@ body {
     height: 100%;
     display: flex;
     flex-direction: column;
-    border-radius: var(--ui-radius-lg);
     overflow: hidden;
     background-color: var(--ui-bg-base);
 }

@@ -4,9 +4,136 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>smtc2web</title>
+    <!--
+      启动外壳（boot shell）：
+      轻量模式每次打开窗口都会重建 WebView，在 Vue 挂载前，这里先呈现与真实
+      标题栏一致的静态外壳，避免窗口先露出空白页再出现前端 UI。
+      颜色与 src/styles/variables.css 保持一致。
+    -->
+    <style>
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+        background-color: #f7f8fa;
+      }
+
+      #boot-shell {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        background-color: #f7f8fa;
+      }
+
+      .boot-titlebar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        height: 44px;
+        padding-left: 12px;
+        flex-shrink: 0;
+        background-color: #ffffff;
+        border-bottom: 1px solid #e3e6eb;
+        user-select: none;
+        -webkit-user-select: none;
+      }
+
+      .boot-icon {
+        width: 18px;
+        height: 18px;
+        border-radius: 3px;
+      }
+
+      .boot-title {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei",
+          "PingFang SC", "Hiragino Sans GB", sans-serif;
+        font-size: 13px;
+        font-weight: 600;
+        color: #17191d;
+      }
+
+      .boot-body {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      /* 载入指示：延迟淡入，页面很快就绪时不会闪烁。
+         窗口只有在启动脚本执行后才显示，因此这一层就是窗口的第一帧。 */
+      .boot-spinner {
+        width: 22px;
+        height: 22px;
+        border: 2px solid rgba(37, 99, 235, 0.18);
+        border-top-color: #2563eb;
+        border-radius: 50%;
+        opacity: 0;
+        animation:
+          boot-spinner-fade 0.2s ease 0.15s forwards,
+          boot-spinner-spin 0.7s linear infinite;
+      }
+
+      @keyframes boot-spinner-fade {
+        to {
+          opacity: 1;
+        }
+      }
+
+      @keyframes boot-spinner-spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      @media (prefers-color-scheme: dark) {
+        html,
+        body,
+        #boot-shell {
+          background-color: #0e1013;
+        }
+
+        .boot-titlebar {
+          background-color: #1a1d22;
+          border-bottom-color: #2e343d;
+        }
+
+        .boot-title {
+          color: #f2f4f7;
+        }
+
+        .boot-spinner {
+          border-color: rgba(108, 147, 240, 0.2);
+          border-top-color: #6c93f0;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .boot-spinner {
+          animation: none;
+          opacity: 1;
+        }
+      }
+    </style>
   </head>
   <body>
     <div id="app"></div>
+
+    <div id="boot-shell" aria-hidden="true">
+      <div class="boot-titlebar" data-tauri-drag-region>
+        <img class="boot-icon" src="/app-icon.png" alt="" />
+        <span class="boot-title">smtc2web</span>
+      </div>
+      <div class="boot-body">
+        <div class="boot-spinner"></div>
+      </div>
+    </div>
+
+    <!-- 启动脚本必须在 main.ts 之前执行：DOM 就绪即请求显示窗口。 -->
+    <script type="module" src="/src/boot.ts"></script>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
