@@ -19,7 +19,7 @@ pub struct SessionInfo {
 
 #[cfg(target_os = "linux")]
 pub trait MediaSession: Send + 'static {
-    fn new(process_filter: &str) -> Result<Self, String>
+    fn new() -> Result<Self, String>
     where
         Self: Sized;
     fn poll_current(&self) -> Option<SessionInfo>;
@@ -71,6 +71,16 @@ pub(crate) fn set_cached_album_art(song_id: &str, art: String) {
 
 #[cfg(target_os = "windows")]
 pub mod smtc;
+
+/// 请求媒体监听器重新读取进程过滤器（保存配置后调用）。
+///
+/// Windows 为事件驱动模型，需显式唤醒监听线程重新评估当前会话；
+/// Linux 为轮询模型，每次轮询都会重新读取过滤器，无需额外操作。
+#[cfg(target_os = "windows")]
+pub use smtc::refresh_process_filter;
+
+#[cfg(target_os = "linux")]
+pub fn refresh_process_filter() {}
 
 #[cfg(target_os = "linux")]
 mod mpris;

@@ -1,6 +1,7 @@
 use super::{generate_song_id, get_cached_album_art, matches_process_filter, set_cached_album_art};
 use crate::{CURRENT_APP_DISPLAY_NAME, CURRENT_APP_ID, Shared, Song, format_duration};
 use std::collections::HashMap;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::{SystemTime, UNIX_EPOCH};
 use windows::Foundation::{EventRegistrationToken, TypedEventHandler};
@@ -16,6 +17,23 @@ use windows::Storage::Streams::{Buffer, DataReader, InputStreamOptions};
 
 static AUMID_DISPLAY_NAME_CACHE: std::sync::LazyLock<Mutex<HashMap<String, String>>> =
     std::sync::LazyLock::new(|| Mutex::new(HashMap::new()));
+
+/// 保存配置后请求媒体监听线程重新评估当前会话（进程过滤器热更新）。
+static FILTER_REFRESH_REQUESTED: AtomicBool = AtomicBool::new(false);
+
+/// 媒体监听线程句柄，用于保存配置后唤醒它重新读取过滤器。
+static MEDIA_THREAD: Mutex<Option<std::thread::Thread>> = Mutex::new(None);
+
+/// 请求立即按最新配置重新评估当前媒体会话。
+///
+/// 过滤器本身在 `on_session_changed` 中实时读取，这里只需唤醒处于 park
+/// 状态的监听线程，使其再次执行一次会话匹配。
+pub fn refresh_process_filter() {
+    FILTER_REFRESH_REQUESTED.store(true, Ordering::SeqCst);
+    if let Some(thread) = MEDIA_THREAD.lock().ok().and_then(|guard| guard.clone()) {
+        thread.unpark();
+    }
+}
 
 fn is_store_app(aumid: &str) -> bool {
     aumid.contains('!') && aumid.contains('_')
@@ -120,7 +138,6 @@ struct CurrentSessionInfo {
 struct EventContext {
     state: Shared,
     manager: SmtcManager,
-    process_filter: String,
     current: Mutex<Option<CurrentSessionInfo>>,
     last_song: Mutex<Song>,
     last_position: Mutex<Option<String>>,
@@ -129,14 +146,13 @@ struct EventContext {
 }
 
 impl EventContext {
-    fn new(state: Shared, process_filter: &str) -> Result<Self, String> {
+    fn new(state: Shared) -> Result<Self, String> {
         let manager = SmtcManager::RequestAsync()
             .and_then(|f| f.get())
             .map_err(|e| format!("Failed to get SMTC session manager: {:?}", e))?;
         Ok(EventContext {
             state,
             manager,
-            process_filter: process_filter.to_string(),
             current: Mutex::new(None),
             last_song: Mutex::new(Song::default()),
             last_position: Mutex::new(None),
@@ -179,7 +195,9 @@ impl EventContext {
             .unwrap_or_default();
         let app_name = get_app_display_name(&app_id);
 
-        if !matches_process_filter(&self.process_filter, &app_id, &app_name) {
+        // 每次会话变化时实时读取过滤器，使保存配置后无需重启即可生效。
+        let process_filter = crate::current_process_filter();
+        if !matches_process_filter(&process_filter, &app_id, &app_name) {
             self.clear_state();
             return;
         }
@@ -370,8 +388,11 @@ impl EventContext {
     }
 }
 
-pub fn run_event_driven(state: Shared, process_filter: &str) -> Result<(), String> {
-    let ctx = Arc::new(EventContext::new(state, process_filter)?);
+pub fn run_event_driven(state: Shared) -> Result<(), String> {
+    let ctx = Arc::new(EventContext::new(state)?);
+
+    // 登记线程句柄，供保存配置后唤醒以热更新进程过滤器。
+    *MEDIA_THREAD.lock().unwrap() = Some(std::thread::current());
 
     // Subscribe to session change — handler leaked to stay alive
     let weak = Arc::downgrade(&ctx);
@@ -394,6 +415,12 @@ pub fn run_event_driven(state: Shared, process_filter: &str) -> Result<(), Strin
     ctx.on_session_changed();
 
     loop {
+        // 保存配置后会被唤醒，按最新过滤器重新匹配当前会话。
+        // 先检查再 park：即使刷新请求早于线程就绪，也不会被遗漏。
+        if FILTER_REFRESH_REQUESTED.swap(false, Ordering::SeqCst) {
+            crate::log_info!("进程过滤器已更新，正在重新评估当前媒体会话");
+            ctx.on_session_changed();
+        }
         std::thread::park();
     }
 }

@@ -129,8 +129,12 @@ impl Config {
                                     Ok(new_config) => {
                                         log_info!("Config file updated, reloading...");
                                         // 更新共享配置
-                                        let mut config_guard = config.lock().unwrap();
-                                        *config_guard = new_config;
+                                        {
+                                            let mut config_guard = config.lock().unwrap();
+                                            *config_guard = new_config;
+                                        }
+                                        // 配置文件被外部修改：同步刷新媒体监听的进程过滤器。
+                                        crate::media::refresh_process_filter();
                                     }
                                     Err(e) => {
                                         log_error!("Failed to reload config: {}", e);

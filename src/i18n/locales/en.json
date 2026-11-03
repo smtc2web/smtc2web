@@ -1,6 +1,7 @@
 {
   "nav": {
     "themes": "Themes",
+    "store": "Store",
     "settings": "Settings"
   },
   "themes": {
@@ -139,5 +140,47 @@
       "gitNoUpdate": "Theme is up to date",
       "gitUrlRequired": "Please enter a repository URL"
     }
+  },
+  "store": {
+    "title": "Theme Store",
+    "description": "Browse community-made smtc2web themes and install them with one click.",
+    "search": {
+      "placeholder": "Search themes by name, description, or author…",
+      "btn": "Search"
+    },
+    "tags": {
+      "all": "All"
+    },
+    "sort": {
+      "newest": "Recently Updated",
+      "popular": "Most Downloaded",
+      "name": "Name"
+    },
+    "empty": "No themes found matching your criteria",
+    "pager": {
+      "prev": "Previous",
+      "next": "Next",
+      "info": "Page {current} / {total} ({count} themes)"
+    },
+    "card": {
+      "installing": "Installing…",
+      "downloads": "Downloads"
+    },
+    "detail": {
+      "noScreenshot": "No screenshot available",
+      "viewRepo": "View Source Repository",
+      "versions": "Version History",
+      "version": "Version",
+      "size": "Size",
+      "date": "Date",
+      "install": "Download & Install",
+      "downloading": "Downloading…",
+      "installing": "Installing…",
+      "installed": "Installed",
+      "installFailed": "Install Failed"
+    },
+    "installSuccess": "Theme installed! Switch to it in the Themes page.",
+    "installError": "Installation failed: {message}",
+    "loadError": "Failed to load theme store: {message}"
   }
 }

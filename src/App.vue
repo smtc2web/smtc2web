@@ -1,6 +1,6 @@
 <template>
     <div id="app">
-        <NavBar />
+        <TitleBar />
         <main class="page">
             <RouterView v-slot="{ Component, route }">
                 <Transition :name="pageTransition" mode="out-in">
@@ -19,7 +19,7 @@ import { useRoute } from "vue-router";
 import { useConfigStore } from "@/stores/config";
 import { useLocaleStore } from "@/stores/locale";
 import { useUpdateStore, type UpdateProgress } from "@/stores/update";
-import NavBar from "@/components/NavBar.vue";
+import TitleBar from "@/components/TitleBar.vue";
 import Toast from "@/components/Toast.vue";
 import UpdateDialog from "@/components/UpdateDialog.vue";
 import { hasTauri } from "@/utils";
@@ -29,8 +29,8 @@ const localeStore = useLocaleStore();
 const updateStore = useUpdateStore();
 const route = useRoute();
 
-// 页面切换动效：按导航顺序决定滑入方向（主题 -> 设置向右，设置 -> 主题向左）。
-const PAGE_ORDER: Record<string, number> = { themes: 0, settings: 1 };
+// 页面切换动效：按导航顺序决定滑入方向（主题 -> 商店 -> 设置 依次向右）。
+const PAGE_ORDER: Record<string, number> = { themes: 0, store: 1, settings: 2 };
 const pageTransition = computed(() => {
     const name = String(route.name ?? "themes");
     return (PAGE_ORDER[name] ?? 0) >= 1 ? "page-next" : "page-prev";
@@ -50,6 +50,12 @@ onMounted(async () => {
             listen<UpdateProgress>("update-progress", (e) =>
                 updateStore.setProgress(e.payload),
             );
+        });
+
+        // 瞬间加载：初始化完成后显示窗口，避免白屏闪烁
+        import("@tauri-apps/api/webviewWindow").then(({ WebviewWindow }) => {
+            const win = WebviewWindow.getCurrent();
+            win.show();
         });
     }
 });

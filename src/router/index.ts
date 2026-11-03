@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 
 // 懒加载路由组件
 const ThemesView = () => import('@/views/ThemesView.vue')
+const ThemeStoreView = () => import('@/views/ThemeStoreView.vue')
 const SettingsView = () => import('@/views/SettingsView.vue')
 
 const router = createRouter({
@@ -15,6 +16,11 @@ const router = createRouter({
       path: '/themes',
       name: 'themes',
       component: ThemesView
+    },
+    {
+      path: '/store',
+      name: 'store',
+      component: ThemeStoreView
     },
     {
       path: '/settings',

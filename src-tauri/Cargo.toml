@@ -48,6 +48,7 @@ tauri-plugin-updater = { version = "2", default-features = false, features = ["r
 url = "2"
 ttf-parser = "0.25"
 tokio-stream = { version = "0.1", features = ["sync"] }
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "stream"] }
 
 [target.'cfg(target_os = "windows")'.dependencies.windows]
 features = [

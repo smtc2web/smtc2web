@@ -6,6 +6,12 @@
             /></span>
             <span class="tab-label">{{ t("nav.themes") }}</span>
         </RouterLink>
+        <RouterLink to="/store" class="navbar-tab" active-class="active">
+            <span class="tab-icon"
+                ><font-awesome-icon icon="store"
+            /></span>
+            <span class="tab-label">{{ t("nav.store") }}</span>
+        </RouterLink>
         <RouterLink
             to="/settings"
             class="navbar-tab"

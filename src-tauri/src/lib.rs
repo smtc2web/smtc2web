@@ -5,7 +5,7 @@ use std::net::{IpAddr, SocketAddr};
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex, RwLock};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
-use tauri::{Manager, Runtime, WebviewWindow, WebviewWindowBuilder};
+use tauri::{Emitter, Manager, Runtime, WebviewWindow, WebviewWindowBuilder};
 use tokio::sync::{broadcast, oneshot};
 use tokio_stream::StreamExt;
 use tokio_stream::wrappers::BroadcastStream;
@@ -277,16 +277,22 @@ fn check_single_instance() -> Result<SingleInstance, String> {
 }
 
 // -------------------- 后台媒体事件 (Windows: 事件驱动, Linux: 轮询) --------------------
-fn media_worker(state: Shared) {
-    let process_filter = {
-        let app_state = APP_STATE.lock().unwrap_or_else(|e| e.into_inner());
-        let config = app_state.config.lock().unwrap_or_else(|e| e.into_inner());
-        config.process_filter.clone()
-    };
 
+/// 读取当前配置中的进程过滤器。
+///
+/// 每次调用都实时读取共享配置，因此保存配置后无需重启媒体监听线程即可生效。
+pub(crate) fn current_process_filter() -> String {
+    APP_STATE
+        .lock()
+        .ok()
+        .and_then(|state| state.config.lock().ok().map(|c| c.process_filter.clone()))
+        .unwrap_or_else(|| "*".to_string())
+}
+
+fn media_worker(state: Shared) {
     #[cfg(target_os = "windows")]
     {
-        if let Err(e) = media::smtc::run_event_driven(state, &process_filter) {
+        if let Err(e) = media::smtc::run_event_driven(state) {
             log_error!("Media event worker failed: {}", e);
         }
     }
@@ -295,7 +301,7 @@ fn media_worker(state: Shared) {
     {
         use media::{MediaSession, PlatformSession};
 
-        let session = match PlatformSession::new(&process_filter) {
+        let session = match PlatformSession::new() {
             Ok(s) => s,
             Err(e) => {
                 log_error!("Failed to create media session: {}", e);
@@ -613,16 +619,27 @@ async fn save_config(config_dto: ConfigDto) -> Result<(), String> {
         )
     })?;
 
-    let (old_theme, new_theme, should_reload, old_tx, old_handle, shared, old_address, old_port) = {
+    let (
+        old_theme,
+        new_theme,
+        filter_changed,
+        should_reload,
+        old_tx,
+        old_handle,
+        shared,
+        old_address,
+        old_port,
+    ) = {
         let mut app_state = APP_STATE.lock().map_err(|e| e.to_string())?;
 
         // 记录当前正在运行的监听信息，用于判断是否需要重载。
         let old_address = app_state.server_address;
         let old_port = app_state.server_port;
 
-        let (old_theme, new_theme) = {
+        let (old_theme, new_theme, filter_changed) = {
             let mut config = app_state.config.lock().map_err(|e| e.to_string())?;
             let old_theme = config.current_theme.clone();
+            let old_filter = config.process_filter.clone();
 
             config.server_port = config_dto.server_port;
             config.address = address.to_string();
@@ -635,7 +652,11 @@ async fn save_config(config_dto: ConfigDto) -> Result<(), String> {
             config.font_family = config_dto.font_family.clone();
 
             config.save().map_err(|e| e.to_string())?;
-            (old_theme, config.current_theme.clone())
+            (
+                old_theme,
+                config.current_theme.clone(),
+                old_filter != config.process_filter,
+            )
         };
 
         let should_reload = old_address != Some(address) || old_port != config_dto.server_port;
@@ -653,6 +674,7 @@ async fn save_config(config_dto: ConfigDto) -> Result<(), String> {
         (
             old_theme,
             new_theme,
+            filter_changed,
             should_reload,
             old_tx,
             old_handle,
@@ -668,6 +690,12 @@ async fn save_config(config_dto: ConfigDto) -> Result<(), String> {
     // 主题发生变化时通知已连接页面刷新。
     if old_theme != new_theme {
         let _ = LIVE_TX.send(LiveMsg::Reload);
+    }
+
+    // 进程过滤器变化：立即让媒体监听重新匹配当前会话，无需重启应用。
+    if filter_changed {
+        log_info!("进程过滤器已更新，正在重新加载媒体监听");
+        media::refresh_process_filter();
     }
 
     // 监听地址或端口发生变化：重载服务器。
@@ -815,6 +843,121 @@ async fn list_system_fonts() -> Result<Vec<String>, String> {
     Ok(font::list_system_fonts())
 }
 
+/// 从主题商店下载 ZIP 并安装到本地主题目录。
+///
+/// 通过 Rust 后端执行 HTTP 流式下载，并实时推送进度事件 `download-progress`
+/// 到前端（含 downloaded / total / percent / slug）。下载完成后复用安全解压逻辑。
+#[tauri::command]
+async fn download_theme_from_store(
+    app: tauri::AppHandle,
+    download_url: String,
+    slug: String,
+) -> Result<String, String> {
+    use std::io::Write;
+
+    // 校验下载链接：仅允许 HTTPS
+    let parsed_url = url::Url::parse(download_url.trim())
+        .map_err(|_| "无效的下载链接".to_string())?;
+    if parsed_url.scheme() != "https" {
+        return Err("只允许 HTTPS 下载链接".to_string());
+    }
+
+    // 校验 slug：防止路径穿越
+    theme_manager::ThemeManager::scan_themes()
+        .map_err(|e| e.to_string())?; // 确保主题目录存在
+    if slug.is_empty() || slug.contains("..") || slug.contains('/') || slug.contains('\\') {
+        return Err("无效的主题标识".to_string());
+    }
+
+    // 发起流式下载
+    log_info!("正在从商店下载主题: {} -> {}", slug, download_url);
+    let response = reqwest::get(&download_url)
+        .await
+        .map_err(|e| format!("下载主题失败: {}", e))?;
+
+    if !response.status().is_success() {
+        return Err(format!("下载失败，服务器返回状态码: {}", response.status()));
+    }
+
+    // 从 Content-Length 获取总大小（可能为 None）
+    let total = response.content_length().map(|v| v as usize);
+    const MAX_DOWNLOAD_BYTES: usize = 20 * 1024 * 1024;
+
+    // 流式读取，边下载边推送进度
+    let mut downloaded: usize = 0;
+    let mut all_bytes: Vec<u8> = Vec::new();
+    let mut stream = response.bytes_stream();
+
+    while let Some(chunk) = stream.next().await {
+        let chunk = chunk.map_err(|e| format!("下载中断: {}", e))?;
+        all_bytes.extend_from_slice(&chunk);
+        downloaded += chunk.len();
+
+        if downloaded > MAX_DOWNLOAD_BYTES {
+            return Err(format!(
+                "主题包过大 ({} bytes)，上限为 {} MB",
+                downloaded,
+                MAX_DOWNLOAD_BYTES / 1024 / 1024
+            ));
+        }
+
+        // 向前端推送进度事件
+        let percent = total
+            .map(|t| if t > 0 { (downloaded as f64 / t as f64 * 100.0).min(100.0) } else { 0.0 })
+            .unwrap_or(0.0);
+        let _ = app.emit(
+            "download-progress",
+            serde_json::json!({
+                "slug": slug,
+                "downloaded": downloaded,
+                "total": total.unwrap_or(0),
+                "percent": percent,
+            }),
+        );
+    }
+
+    if downloaded == 0 {
+        return Err("下载内容为空".to_string());
+    }
+
+    // 写入临时文件后复用安全解压逻辑
+    let nanos = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|d| d.as_nanos())
+        .unwrap_or(0);
+    let temp_path = std::env::temp_dir().join(format!(
+        "smtc2web-store-{}-{}.zip",
+        std::process::id(),
+        nanos
+    ));
+
+    {
+        let mut f = std::fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&temp_path)
+            .map_err(|e| format!("创建临时文件失败: {}", e))?;
+        if let Err(e) = f.write_all(&all_bytes) {
+            let _ = std::fs::remove_file(&temp_path);
+            return Err(format!("写入临时文件失败: {}", e));
+        }
+    }
+
+    let result = theme_manager::ThemeManager::extract_theme_as(&temp_path, &slug);
+    let _ = std::fs::remove_file(&temp_path);
+
+    match result {
+        Ok(name) => {
+            log_info!("商店主题安装成功: {}", name);
+            Ok(name)
+        }
+        Err(e) => {
+            log_error!("商店主题安装失败: {}", e);
+            Err(format!("安装主题失败: {}", e))
+        }
+    }
+}
+
 /// Windows 11 圆角适配：通过 DWM API 为无边框窗口启用原生圆角
 #[cfg(target_os = "windows")]
 fn apply_window_rounded_corners<R: Runtime>(window: &WebviewWindow<R>) {
@@ -915,6 +1058,13 @@ pub fn run() {
 
     let runtime = tokio::runtime::Runtime::new().expect("Failed to create Tokio runtime");
 
+    // 先登记配置，确保媒体监听启动后能读取到真实的过滤器（而非默认值），
+    // 后续窗口命令也能立即使用已加载的配置。
+    {
+        let mut app_state = APP_STATE.lock().unwrap();
+        app_state.config = config.clone();
+    }
+
     let state: Shared = Arc::default();
     let st = state.clone();
 
@@ -928,12 +1078,6 @@ pub fn run() {
             resolve_address(&config_guard),
         )
     };
-
-    // 先登记配置，确保后续命令能读取到正确的配置。
-    {
-        let mut app_state = APP_STATE.lock().unwrap();
-        app_state.config = config.clone();
-    }
 
     let state_for_server = state.clone();
     let (server_tx, server_handle) = match runtime
@@ -984,7 +1128,8 @@ pub fn run() {
             window_close,
             window_is_maximized,
             open_url,
-            list_system_fonts
+            list_system_fonts,
+            download_theme_from_store
         ])
         .setup(move |app| {
             app.manage(updater::PendingUpdate::default());

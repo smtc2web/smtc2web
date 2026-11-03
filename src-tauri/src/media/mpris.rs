@@ -6,7 +6,6 @@ use mpris::PlaybackStatus;
 use std::sync::Mutex;
 
 pub struct MprisSession {
-    process_filter: String,
     last_art_url: Mutex<Option<String>>,
 }
 
@@ -44,7 +43,9 @@ impl MprisSession {
         });
 
         for player in sorted_players {
-            if matches_process_filter(&self.process_filter, player.bus_name(), player.identity()) {
+            // 每次轮询实时读取过滤器，使保存配置后无需重启即可生效。
+            let process_filter = crate::current_process_filter();
+            if matches_process_filter(&process_filter, player.bus_name(), player.identity()) {
                 crate::log_debug!("MPRIS2: Selected player: {}", player.bus_name());
                 return Ok(player);
             }
@@ -63,12 +64,11 @@ impl MprisSession {
 }
 
 impl MediaSession for MprisSession {
-    fn new(process_filter: &str) -> Result<Self, String>
+    fn new() -> Result<Self, String>
     where
         Self: Sized,
     {
         Ok(MprisSession {
-            process_filter: process_filter.to_string(),
             last_art_url: Mutex::new(None),
         })
     }
