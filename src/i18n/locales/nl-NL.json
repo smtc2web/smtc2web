@@ -139,5 +139,41 @@
       "gitNoUpdate": "Thema is bijgewerkt",
       "gitUrlRequired": "Voer een opslagplaats-URL in"
     }
+  },
+  "quickStart": {
+    "title": "Snelstart",
+    "description": "Zet uw now-playing-overlay in drie stappen in OBS",
+    "stepOf": "Stap {current} van {total}",
+    "skip": "Overslaan",
+    "back": "Terug",
+    "next": "Volgende",
+    "finish": "Aan de slag",
+    "steps": {
+      "theme": {
+        "title": "Thema installeren of importeren",
+        "desc": "Het standaardthema werkt direct. Wilt u het uiterlijk wijzigen, installeer dan een thema uit de winkel of importeer uw eigen thema via Git of ZIP op de pagina 'Thema's'. De live-uitvoer wordt direct bijgewerkt, zonder herstart.",
+        "action": "Installeren uit de winkel"
+      },
+      "connect": {
+        "title": "Verbinden met OBS",
+        "desc": "smtc2web levert de overlay lokaal. Voeg deze in OBS toe als 'Browser'-bron.",
+        "urlLabel": "URL van de browserbron",
+        "copy": "URL kopiëren",
+        "copied": "Gekopieerd",
+        "copyFailed": "Kopiëren mislukt. Selecteer en kopieer de URL handmatig.",
+        "preview": "Voorbeeld in browser",
+        "previewFailed": "Kan de browser niet openen. Kopieer de URL handmatig.",
+        "obsStep1": "Voeg in OBS een nieuwe 'Browser'-bron toe",
+        "obsStep2": "Plak de bovenstaande URL in het URL-veld",
+        "obsStep3": "Stel de gewenste grootte in (bijv. 1920 × 1080) en bevestig"
+      },
+      "ready": {
+        "title": "Helemaal klaar",
+        "desc": "Start muziek en de overlay verschijnt in OBS.",
+        "tip1": "Trackinformatie wordt automatisch gelezen tijdens het afspelen",
+        "tip2": "Thema's wisselen live en de uitvoer wordt direct vernieuwd",
+        "tip3": "Poort, luisteradres en procesfilter wijzigt u in 'Instellingen'"
+      }
+    }
   }
 }

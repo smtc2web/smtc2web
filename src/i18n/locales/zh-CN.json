@@ -15,6 +15,8 @@
       "store": "主题商店",
       "docs": "编译文档"
     },
+    "quickStart": "再次演示快速上手",
+    "quickStartDesc": "重新播放三步接入引导",
     "license": "本项目以 MIT 许可证开源发布。",
     "copyright": "© {year} smtc2web contributors"
   },
@@ -196,5 +198,41 @@
     "installSuccess": "主题安装成功！请在「主题」页面中切换使用。",
     "installError": "安装失败：{message}",
     "loadError": "加载主题商店失败：{message}"
+  },
+  "quickStart": {
+    "title": "快速上手",
+    "description": "三步把正在播放的音乐投到 OBS",
+    "stepOf": "第 {current} 步 / 共 {total} 步",
+    "skip": "跳过",
+    "back": "上一步",
+    "next": "下一步",
+    "finish": "开始使用",
+    "steps": {
+      "theme": {
+        "title": "安装或导入主题",
+        "desc": "默认主题开箱即用；想换风格时，可以去「商店」安装主题，或在「主题」页用 Git / ZIP 导入自己的主题。切换后直播画面会实时更新，无需重启。",
+        "action": "去商店安装"
+      },
+      "connect": {
+        "title": "接入 OBS",
+        "desc": "smtc2web 在本地提供浏览器画面，把它作为「浏览器」来源添加进 OBS 即可。",
+        "urlLabel": "浏览器源地址",
+        "copy": "复制地址",
+        "copied": "已复制",
+        "copyFailed": "复制失败，请手动选择地址复制",
+        "preview": "在浏览器中预览",
+        "previewFailed": "无法打开浏览器，请手动复制地址访问",
+        "obsStep1": "在 OBS 中新建「浏览器」来源",
+        "obsStep2": "把上面的地址粘贴到 URL 栏",
+        "obsStep3": "按需设置宽高（如 1920 × 1080）后确定"
+      },
+      "ready": {
+        "title": "准备就绪",
+        "desc": "现在播放音乐，浮层就会出现在 OBS 画面中。",
+        "tip1": "播放任意歌曲即可自动读取曲目信息",
+        "tip2": "主题可热切换，画面会立即刷新",
+        "tip3": "端口、监听地址和进程过滤都能在「设置」里调整"
+      }
+    }
   }
 }

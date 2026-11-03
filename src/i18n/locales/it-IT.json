@@ -139,5 +139,41 @@
       "gitNoUpdate": "Il tema è aggiornato",
       "gitUrlRequired": "Inserisci un URL del repository"
     }
+  },
+  "quickStart": {
+    "title": "Avvio rapido",
+    "description": "Porta l'overlay del brano in riproduzione su OBS in tre passaggi",
+    "stepOf": "Passaggio {current} di {total}",
+    "skip": "Salta",
+    "back": "Indietro",
+    "next": "Avanti",
+    "finish": "Inizia",
+    "steps": {
+      "theme": {
+        "title": "Installa o importa un tema",
+        "desc": "Il tema predefinito è pronto all'uso. Per cambiare aspetto, installa un tema dallo store oppure importa il tuo via Git o ZIP dalla pagina «Temi». L'uscita live si aggiorna subito, senza riavviare.",
+        "action": "Vai allo store"
+      },
+      "connect": {
+        "title": "Collega a OBS",
+        "desc": "smtc2web fornisce l'overlay in locale. Aggiungilo in OBS come sorgente «Browser».",
+        "urlLabel": "URL della sorgente browser",
+        "copy": "Copia URL",
+        "copied": "Copiato",
+        "copyFailed": "Copia non riuscita. Seleziona e copia l'URL manualmente.",
+        "preview": "Anteprima nel browser",
+        "previewFailed": "Impossibile aprire il browser. Copia l'URL manualmente.",
+        "obsStep1": "Aggiungi una nuova sorgente «Browser» in OBS",
+        "obsStep2": "Incolla l'URL qui sopra nel campo URL",
+        "obsStep3": "Imposta la dimensione desiderata (ad es. 1920 × 1080) e conferma"
+      },
+      "ready": {
+        "title": "Tutto pronto",
+        "desc": "Riproduci della musica e l'overlay apparirà in OBS.",
+        "tip1": "Le informazioni del brano vengono lette automaticamente durante la riproduzione",
+        "tip2": "I temi si cambiano a caldo e l'uscita si aggiorna subito",
+        "tip3": "Porta, indirizzo di ascolto e filtro processi si modificano nelle «Impostazioni»"
+      }
+    }
   }
 }

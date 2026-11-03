@@ -139,5 +139,41 @@
       "gitNoUpdate": "Le thème est à jour",
       "gitUrlRequired": "Veuillez saisir une URL de dépôt"
     }
+  },
+  "quickStart": {
+    "title": "Démarrage rapide",
+    "description": "Affichez votre lecteur en cours dans OBS en trois étapes",
+    "stepOf": "Étape {current} sur {total}",
+    "skip": "Ignorer",
+    "back": "Précédent",
+    "next": "Suivant",
+    "finish": "C'est parti",
+    "steps": {
+      "theme": {
+        "title": "Installer ou importer un thème",
+        "desc": "Le thème par défaut fonctionne immédiatement. Pour changer d'apparence, installez un thème depuis la boutique ou importez le vôtre via Git ou ZIP depuis la page « Thèmes ». La sortie en direct se met à jour instantanément, sans redémarrage.",
+        "action": "Aller à la boutique"
+      },
+      "connect": {
+        "title": "Connecter à OBS",
+        "desc": "smtc2web diffuse l'overlay en local. Ajoutez-le dans OBS comme source « Navigateur ».",
+        "urlLabel": "URL de la source navigateur",
+        "copy": "Copier l'URL",
+        "copied": "Copié",
+        "copyFailed": "La copie a échoué. Veuillez sélectionner et copier l'URL manuellement.",
+        "preview": "Aperçu dans le navigateur",
+        "previewFailed": "Impossible d'ouvrir le navigateur. Veuillez copier l'URL manuellement.",
+        "obsStep1": "Ajoutez une nouvelle source « Navigateur » dans OBS",
+        "obsStep2": "Collez l'URL ci-dessus dans le champ URL",
+        "obsStep3": "Réglez la taille souhaitée (par ex. 1920 × 1080) puis validez"
+      },
+      "ready": {
+        "title": "Tout est prêt",
+        "desc": "Lancez de la musique : l'overlay apparaîtra dans OBS.",
+        "tip1": "Les informations du morceau sont lues automatiquement pendant la lecture",
+        "tip2": "Les thèmes se changent à chaud et la sortie se rafraîchit immédiatement",
+        "tip3": "Le port, l'adresse d'écoute et le filtre de processus se règlent dans « Paramètres »"
+      }
+    }
   }
 }

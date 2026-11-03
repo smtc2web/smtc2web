@@ -139,5 +139,41 @@
       "gitNoUpdate": "主題已是最新",
       "gitUrlRequired": "請輸入存放庫網址"
     }
+  },
+  "quickStart": {
+    "title": "快速上手",
+    "description": "三步把正在播放的音樂投到 OBS",
+    "stepOf": "第 {current} 步 / 共 {total} 步",
+    "skip": "略過",
+    "back": "上一步",
+    "next": "下一步",
+    "finish": "開始使用",
+    "steps": {
+      "theme": {
+        "title": "安裝或匯入主題",
+        "desc": "預設主題開箱即用；想換風格時，可以去「商店」安裝主題，或在「主題」頁用 Git / ZIP 匯入自己的主題。切換後直播畫面會即時更新，無需重啟。",
+        "action": "去商店安裝"
+      },
+      "connect": {
+        "title": "接入 OBS",
+        "desc": "smtc2web 在本機提供瀏覽器畫面，將它作為「瀏覽器」來源加入 OBS 即可。",
+        "urlLabel": "瀏覽器來源網址",
+        "copy": "複製網址",
+        "copied": "已複製",
+        "copyFailed": "複製失敗，請手動選取網址複製",
+        "preview": "在瀏覽器中預覽",
+        "previewFailed": "無法開啟瀏覽器，請手動複製網址瀏覽",
+        "obsStep1": "在 OBS 中新增「瀏覽器」來源",
+        "obsStep2": "把上方的網址貼到 URL 欄位",
+        "obsStep3": "依需求設定寬高（例如 1920 × 1080）後確定"
+      },
+      "ready": {
+        "title": "準備就緒",
+        "desc": "現在播放音樂，浮層就會出現在 OBS 畫面中。",
+        "tip1": "播放任意歌曲即可自動讀取曲目資訊",
+        "tip2": "主題可熱切換，畫面會立即重新整理",
+        "tip3": "連接埠、監聽位址與行程篩選都能在「設定」中調整"
+      }
+    }
   }
 }

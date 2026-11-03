@@ -26,6 +26,7 @@ import {
   faExternalLink,
   faGlobe,
   faBook,
+  faCircleQuestion,
 } from "@fortawesome/free-solid-svg-icons";
 
 // Add icons to the library
@@ -55,4 +56,5 @@ library.add(
   faExternalLink,
   faGlobe,
   faBook,
+  faCircleQuestion,
 );

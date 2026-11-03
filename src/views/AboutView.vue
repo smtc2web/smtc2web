@@ -16,6 +16,13 @@
                     <p class="app-description">{{ t("about.description") }}</p>
                 </div>
             </div>
+            <div class="about-actions">
+                <button type="button" class="replay-btn" @click="quickStart.open()">
+                    <font-awesome-icon icon="rotate" />
+                    {{ t("about.quickStart") }}
+                </button>
+                <span class="replay-desc">{{ t("about.quickStartDesc") }}</span>
+            </div>
         </section>
 
         <section class="about-links">
@@ -47,6 +54,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
+import { useQuickStartStore } from "@/stores/quickStart";
 import { hasTauri, tauriInvoke } from "@/utils";
 
 interface AboutLink {
@@ -56,6 +64,7 @@ interface AboutLink {
 }
 
 const { t } = useI18n();
+const quickStart = useQuickStartStore();
 
 const version = ref("—");
 const currentYear = new Date().getFullYear();
@@ -160,6 +169,44 @@ onMounted(async () => {
     margin-top: var(--ui-space-sm);
     font-size: 14px;
     line-height: 1.6;
+    color: var(--ui-text-secondary);
+}
+
+.about-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--ui-space-sm);
+    margin-top: var(--ui-space-md);
+    padding-top: var(--ui-space-md);
+    border-top: 1px solid var(--ui-border);
+}
+
+.replay-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius-md);
+    background-color: var(--ui-bg-secondary);
+    color: var(--ui-text-primary);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition:
+        border-color var(--ui-transition-fast),
+        color var(--ui-transition-fast),
+        background-color var(--ui-transition-fast);
+}
+
+.replay-btn:hover {
+    border-color: var(--ui-accent);
+    color: var(--ui-accent);
+}
+
+.replay-desc {
+    font-size: 12px;
     color: var(--ui-text-secondary);
 }
 

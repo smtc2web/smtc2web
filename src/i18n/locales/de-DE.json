@@ -139,5 +139,41 @@
       "gitNoUpdate": "Thema ist auf dem neuesten Stand",
       "gitUrlRequired": "Bitte geben Sie eine Repository-URL ein"
     }
+  },
+  "quickStart": {
+    "title": "Schnellstart",
+    "description": "In drei Schritten das Now-Playing-Overlay in OBS bringen",
+    "stepOf": "Schritt {current} von {total}",
+    "skip": "Überspringen",
+    "back": "Zurück",
+    "next": "Weiter",
+    "finish": "Loslegen",
+    "steps": {
+      "theme": {
+        "title": "Thema installieren oder importieren",
+        "desc": "Das Standardthema funktioniert sofort. Wenn Sie das Aussehen ändern möchten, installieren Sie ein Thema aus dem Shop oder importieren Sie Ihr eigenes per Git oder ZIP auf der Seite „Themen“. Die Live-Ausgabe aktualisiert sich sofort, ohne Neustart.",
+        "action": "Im Shop installieren"
+      },
+      "connect": {
+        "title": "Mit OBS verbinden",
+        "desc": "smtc2web stellt das Overlay lokal bereit. Fügen Sie es in OBS als Browser-Quelle hinzu.",
+        "urlLabel": "URL der Browser-Quelle",
+        "copy": "URL kopieren",
+        "copied": "Kopiert",
+        "copyFailed": "Kopieren fehlgeschlagen. Bitte markieren und kopieren Sie die URL manuell.",
+        "preview": "Im Browser ansehen",
+        "previewFailed": "Der Browser konnte nicht geöffnet werden. Bitte kopieren Sie die URL manuell.",
+        "obsStep1": "Fügen Sie in OBS eine neue Browser-Quelle hinzu",
+        "obsStep2": "Fügen Sie die obige URL in das URL-Feld ein",
+        "obsStep3": "Stellen Sie die gewünschte Größe ein (z. B. 1920 × 1080) und bestätigen Sie"
+      },
+      "ready": {
+        "title": "Alles bereit",
+        "desc": "Spielen Sie jetzt Musik ab – das Overlay erscheint in OBS.",
+        "tip1": "Titelinformationen werden beim Abspielen automatisch gelesen",
+        "tip2": "Themen lassen sich live wechseln, die Ausgabe aktualisiert sich sofort",
+        "tip3": "Port, Adresse und Prozessfilter können Sie in den Einstellungen ändern"
+      }
+    }
   }
 }

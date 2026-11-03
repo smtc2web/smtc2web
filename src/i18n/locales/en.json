@@ -15,6 +15,8 @@
       "store": "Theme Store",
       "docs": "Build Documentation"
     },
+    "quickStart": "Replay quick start",
+    "quickStartDesc": "Replay the three-step OBS setup guide",
     "license": "Released under the MIT License.",
     "copyright": "© {year} smtc2web contributors"
   },
@@ -196,5 +198,41 @@
     "installSuccess": "Theme installed! Switch to it in the Themes page.",
     "installError": "Installation failed: {message}",
     "loadError": "Failed to load theme store: {message}"
+  },
+  "quickStart": {
+    "title": "Quick start",
+    "description": "Get your now-playing overlay into OBS in three steps",
+    "stepOf": "Step {current} of {total}",
+    "skip": "Skip",
+    "back": "Back",
+    "next": "Next",
+    "finish": "Get started",
+    "steps": {
+      "theme": {
+        "title": "Install or import a theme",
+        "desc": "The default theme works out of the box. To change the look, install one from the Store or import your own via Git or ZIP on the Themes page. Switching updates the live output instantly, no restart needed.",
+        "action": "Install from the store"
+      },
+      "connect": {
+        "title": "Connect to OBS",
+        "desc": "smtc2web serves the overlay locally. Add it to OBS as a Browser source.",
+        "urlLabel": "Browser source URL",
+        "copy": "Copy URL",
+        "copied": "Copied",
+        "copyFailed": "Copy failed. Please select and copy the URL manually.",
+        "preview": "Preview in browser",
+        "previewFailed": "Couldn't open the browser. Please copy the URL manually.",
+        "obsStep1": "Add a new Browser source in OBS",
+        "obsStep2": "Paste the URL above into the URL field",
+        "obsStep3": "Set the size you need (e.g. 1920 × 1080) and click OK"
+      },
+      "ready": {
+        "title": "You're all set",
+        "desc": "Play some music and the overlay will show up in OBS.",
+        "tip1": "Track info is read automatically when music plays",
+        "tip2": "Themes switch live and the output refreshes immediately",
+        "tip3": "Port, listen address and process filter can be changed in Settings"
+      }
+    }
   }
 }
