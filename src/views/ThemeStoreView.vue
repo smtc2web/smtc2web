@@ -42,11 +42,33 @@
           <span class="chip-count">{{ item.count }}</span>
         </button>
       </div>
-      <select class="store-sort" :value="filters.sort" @change="store.setSort(($event.target as HTMLSelectElement).value)">
-        <option value="newest">{{ t('store.sort.newest') }}</option>
-        <option value="popular">{{ t('store.sort.popular') }}</option>
-        <option value="name">{{ t('store.sort.name') }}</option>
-      </select>
+      <SelectRoot :model-value="filters.sort" @update:model-value="onSortChange">
+        <SelectTrigger class="store-sort">
+          {{ currentSortLabel }}
+        </SelectTrigger>
+        <SelectPortal>
+          <SelectContent
+            class="store-sort-menu"
+            position="popper"
+            align="end"
+            :side-offset="4"
+          >
+            <SelectViewport>
+              <SelectItem
+                v-for="option in SORT_OPTIONS"
+                :key="option.value"
+                :value="option.value"
+                class="store-sort-item"
+              >
+                <SelectItemIndicator class="store-sort-item__check">
+                  <font-awesome-icon icon="check" />
+                </SelectItemIndicator>
+                <SelectItemText>{{ t(option.label) }}</SelectItemText>
+              </SelectItem>
+            </SelectViewport>
+          </SelectContent>
+        </SelectPortal>
+      </SelectRoot>
     </div>
 
     <!-- 错误提示 -->
@@ -115,9 +137,19 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { storeToRefs } from "pinia";
+import {
+  SelectContent,
+  SelectItem,
+  SelectItemIndicator,
+  SelectItemText,
+  SelectPortal,
+  SelectRoot,
+  SelectTrigger,
+  SelectViewport,
+} from "reka-ui";
 import { useThemeStorePage } from "@/stores/themeStorePage";
 import { useToastStore } from "@/stores/toast";
 import ThemeStoreCard from "@/components/ThemeStoreCard.vue";
@@ -140,6 +172,24 @@ const {
 } = storeToRefs(store);
 
 const searchInput = ref(filters.value.q || "");
+
+const SORT_OPTIONS = [
+  { value: "newest", label: "store.sort.newest" },
+  { value: "popular", label: "store.sort.popular" },
+  { value: "name", label: "store.sort.name" },
+] as const;
+
+const currentSortLabel = computed(
+  () =>
+    t(
+      SORT_OPTIONS.find((option) => option.value === filters.value.sort)?.label ??
+        "store.sort.newest",
+    ),
+);
+
+function onSortChange(value: unknown) {
+  if (typeof value === "string") store.setSort(value);
+}
 
 function handleSearch() {
   store.search(searchInput.value);
@@ -264,14 +314,33 @@ onMounted(async () => {
 }
 
 .store-sort {
-  padding: 6px 10px;
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 32px 6px 10px;
   border: 1px solid var(--ui-border);
   border-radius: var(--ui-radius-md);
   font-size: 13px;
-  background: var(--ui-bg-primary);
+  background-color: var(--ui-bg-primary);
+  background-image: var(--ui-select-chevron);
+  background-repeat: no-repeat;
+  background-position: right 10px center;
   color: var(--ui-text-primary);
   cursor: pointer;
   flex-shrink: 0;
+  user-select: none;
+  transition:
+    border-color var(--ui-transition-fast),
+    background-color var(--ui-transition-fast);
+}
+
+.store-sort:hover {
+  border-color: var(--ui-border-hover);
+}
+
+.store-sort:focus-visible,
+.store-sort[data-state="open"] {
+  outline: none;
+  border-color: var(--ui-accent);
 }
 
 .store-error {
@@ -430,5 +499,49 @@ onMounted(async () => {
   .skeleton-meta {
     animation: none;
   }
+}
+</style>
+
+<style>
+/* 下拉菜单经 SelectPortal 挂到 body，作用域样式无法稳定命中，使用全局类名。 */
+.store-sort-menu {
+  z-index: 9000;
+  min-width: var(--reka-select-trigger-width, 120px);
+  padding: 4px;
+  background: var(--ui-bg-card);
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-radius-md);
+  box-shadow: var(--ui-shadow-lg);
+  color: var(--ui-text-primary);
+}
+
+.store-sort-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 7px 10px 7px 28px;
+  border-radius: var(--ui-radius-sm);
+  font-size: 13px;
+  white-space: nowrap;
+  color: var(--ui-text-primary);
+  outline: none;
+  cursor: pointer;
+  user-select: none;
+}
+
+.store-sort-item[data-highlighted] {
+  background: var(--ui-bg-secondary);
+}
+
+.store-sort-item[data-state="checked"] {
+  color: var(--ui-accent);
+}
+
+.store-sort-item__check {
+  position: absolute;
+  left: 9px;
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
 }
 </style>
