@@ -1,5 +1,6 @@
 <template>
-    <div data-tauri-drag-region class="titlebar">
+    <!-- deep：Linux（WebKitGTK 不支持 -webkit-app-region）下整个标题栏子区域都可拖动，按钮/链接会被自动排除 -->
+    <div data-tauri-drag-region="deep" class="titlebar">
         <div class="titlebar-left">
             <img class="titlebar-icon" src="/app-icon.png" alt="smtc2web" />
             <span class="titlebar-title">smtc2web</span>

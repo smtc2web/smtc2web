@@ -15,6 +15,8 @@ use warp::Filter;
 mod config;
 mod font;
 mod i18n;
+#[cfg(target_os = "linux")]
+mod linux_desktop;
 mod logger;
 mod media;
 mod theme;
@@ -1102,6 +1104,10 @@ pub fn show_main_window<R: Runtime>(app: &tauri::AppHandle<R>) {
 pub fn run() {
     logger::init();
     log_info!("应用程序启动");
+
+    // Wayland 任务栏按 app_id 查找同名 .desktop 解析图标，未安装时需要自行登记。
+    #[cfg(target_os = "linux")]
+    linux_desktop::ensure_desktop_entry();
 
     let _single_instance = match check_single_instance() {
         Ok(instance) => instance,

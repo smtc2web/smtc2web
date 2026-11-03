@@ -76,6 +76,9 @@ version = "0.58"
 
 [target.'cfg(target_os = "linux")'.dependencies]
 mpris = "2.0"
+# 启用 tray-icon 的 ksni（StatusNotifierItem）后端：libappindicator 后端不派发
+# 点击事件，启用后左键单击托盘图标才能触发 TrayIconEvent::Click。
+tray-icon = { version = "0.25", features = ["ksni"], default-features = false }
 
 [dev-dependencies]
 criterion = "0.5"
