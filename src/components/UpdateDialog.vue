@@ -243,8 +243,15 @@ async function handleDownload() {
 .release-notes {
   font-size: 13px;
   color: var(--ui-text-secondary);
-  max-height: 150px;
+  max-height: 220px;
   overflow-y: auto;
+}
+
+.release-notes p {
+  margin: 0;
+  line-height: 1.6;
+  white-space: pre-line;
+  word-break: break-word;
 }
 
 .release-notes h4 {

@@ -10,6 +10,7 @@ import './styles/global.css'
 import { useConfigStore } from './stores/config'
 import { preloadThemeData } from './stores/theme'
 import { hasTauri } from './utils'
+import { loadLocaleMessages, setI18nLocale } from './i18n'
 
 const pinia = createPinia()
 const app = createApp(App)
@@ -30,6 +31,12 @@ async function bootstrap() {
         preloadThemeData(),
         router.isReady().catch(() => {}),
     ])
+
+    // 语言包按需加载：仅当配置语言不是回退语言时才拉取对应分块。
+    // 放在挂载前完成，保证首帧文案就是用户设置的语言。
+    const locale = configStore.config.locale
+    await loadLocaleMessages(locale)
+    setI18nLocale(locale)
 
     app.mount('#app')
 

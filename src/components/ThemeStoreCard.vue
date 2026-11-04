@@ -6,6 +6,7 @@
         :src="theme.screenshot_url"
         :alt="theme.name"
         loading="lazy"
+        decoding="async"
       />
       <div v-else class="store-card__placeholder">
         <font-awesome-icon icon="image" />
@@ -73,6 +74,9 @@ const { t } = useI18n();
   border: 2px solid transparent;
   display: flex;
   flex-direction: column;
+  /* 屏幕外的卡片跳过渲染与图片解码，减少长列表的渲染内存。 */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 340px;
 }
 
 .store-card:hover {

@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
-import { ref, computed } from "vue";
+import { ref, shallowRef, computed } from "vue";
 import { useI18n } from "vue-i18n";
+import { convertFileSrc } from "@tauri-apps/api/core";
 import { useToastStore } from "./toast";
 import type { Theme, GitThemeInfo } from "@/types/theme";
 import { hasTauri, tauriInvoke } from "@/utils";
@@ -38,15 +39,20 @@ export const useThemeStore = defineStore("theme", () => {
   const { t } = useI18n();
   const toast = useToastStore();
 
-  const themes = ref<Theme[]>(preloaded?.themes ?? []);
-  const currentTheme = ref(preloaded?.currentTheme ?? "");
+  // 主题对象只整体替换、不就地修改，使用 shallowRef 避免为每个字段建立
+  // 深层响应式代理（主题列表里可能带有较长的截图路径/字符串）。
+  const initial = preloaded;
+  const themes = shallowRef<Theme[]>(initial?.themes ?? []);
+  const currentTheme = ref(initial?.currentTheme ?? "");
   // 只有确实没有缓存数据时才展示骨架屏，避免已有数据时刷新造成闪烁。
   const loading = ref(themes.value.length === 0);
   const uploadLoading = ref(false);
-  const gitThemes = ref<Record<string, GitThemeInfo>>(preloaded?.gitThemes ?? {});
+  const gitThemes = shallowRef<Record<string, GitThemeInfo>>(initial?.gitThemes ?? {});
 
   // 启动时已经预取过数据，首次挂载时无需再重复请求（避免重复扫描主题目录）。
-  let hydrated = preloaded !== null;
+  let hydrated = initial !== null;
+  // 预取数据已移交给 Pinia，释放模块级引用，避免长期持有同一份列表。
+  preloaded = null;
   function consumeHydrated(): boolean {
     const value = hydrated;
     hydrated = false;
@@ -257,8 +263,25 @@ export const useThemeStore = defineStore("theme", () => {
     return folderName in gitThemes.value;
   }
 
+  /**
+   * 把后端返回的截图地址转换成 WebView 可加载的 URL。
+   *
+   * - 默认主题的截图内嵌在二进制里，后端仍返回 data URI；
+   * - 普通主题返回磁盘绝对路径，改用 Tauri asset 协议按需读取。
+   *   这样截图不会再以 Base64 字符串的形式常驻 JS 堆，也避免一次
+   *   性解码所有主题截图，显著降低前端内存占用。
+   */
   function getScreenshotUrl(path: string): string | null {
-    return path && path.startsWith("data:") ? path : null;
+    if (!path) return null;
+    if (path.startsWith("data:")) return path;
+    if (!hasTauri()) return null;
+
+    try {
+      return convertFileSrc(path);
+    } catch (e) {
+      console.error("生成主题截图地址失败:", e);
+      return null;
+    }
   }
 
   return {

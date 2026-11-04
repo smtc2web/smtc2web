@@ -9,7 +9,8 @@
             </RouterView>
         </main>
         <Toast />
-        <UpdateDialog />
+        <!-- 更新弹窗只在需要时加载，避免把弹窗代码常驻在首屏分块里。 -->
+        <UpdateDialog v-if="updateStore.showDialog" />
         <QuickStartWizard
             :visible="quickStart.visible"
             @close="quickStart.close()"
@@ -18,7 +19,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch } from "vue";
+import { defineAsyncComponent, onMounted, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import { useConfigStore } from "@/stores/config";
 import { useLocaleStore } from "@/stores/locale";
@@ -26,9 +27,12 @@ import { useQuickStartStore } from "@/stores/quickStart";
 import { useUpdateStore, type UpdateProgress } from "@/stores/update";
 import TitleBar from "@/components/TitleBar.vue";
 import Toast from "@/components/Toast.vue";
-import UpdateDialog from "@/components/UpdateDialog.vue";
 import QuickStartWizard from "@/components/QuickStartWizard.vue";
 import { hasTauri, tauriInvoke } from "@/utils";
+
+const UpdateDialog = defineAsyncComponent(
+    () => import("@/components/UpdateDialog.vue"),
+);
 
 const configStore = useConfigStore();
 const localeStore = useLocaleStore();
@@ -38,7 +42,7 @@ const route = useRoute();
 
 // 配置已在挂载前加载完毕（见 main.ts），这里同步应用语言，
 // 保证首帧文案就是用户设置的语言，不会出现「先中文再切换」的闪烁。
-localeStore.initLocale();
+void localeStore.initLocale();
 
 // 页面切换动效：按导航顺序决定滑入方向（主题 -> 商店 -> 设置 -> 关于 依次向右）。
 // 必须比较「来源页」和「目标页」的序号，只看目标页会导致后退时方向错乱。

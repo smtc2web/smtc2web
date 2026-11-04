@@ -137,7 +137,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { storeToRefs } from "pinia";
 import {
@@ -218,6 +218,11 @@ watch(
 
 onMounted(async () => {
   await Promise.all([store.loadThemes(), store.loadTags()]);
+});
+
+// 路由离开动画结束后再释放数据，避免离场帧突然变成空状态。
+onBeforeUnmount(() => {
+  store.reset();
 });
 </script>
 

@@ -168,6 +168,8 @@ pub struct ThemeInfo {
     pub folder_name: String,
     pub author: String,
     pub version: String,
+    /// 默认主题为内嵌的 data URI；普通主题为磁盘绝对路径，由前端通过
+    /// Tauri asset 协议按需加载，避免 Base64 截图常驻 JS 内存。
     pub screenshot_path: String,
     pub is_default: bool,
 }
@@ -363,7 +365,7 @@ screenshot = "screenshot.png"
             });
 
             match (mime, resolved) {
-                (Some(mime), Some((base, path))) if path.starts_with(&base) && path.is_file() => {
+                (Some(_), Some((base, path))) if path.starts_with(&base) && path.is_file() => {
                     match fs::metadata(&path) {
                         Ok(meta) if meta.len() > MAX_SCREENSHOT_SIZE => {
                             log_warn!(
@@ -373,19 +375,9 @@ screenshot = "screenshot.png"
                             );
                             String::new()
                         }
-                        Ok(_) => match fs::read(&path) {
-                            Ok(data) if (data.len() as u64) <= MAX_SCREENSHOT_SIZE => {
-                                format!("data:{};base64,{}", mime, STANDARD.encode(&data))
-                            }
-                            Ok(_) => {
-                                log_warn!("主题 '{}' 的截图文件过大，已忽略", name);
-                                String::new()
-                            }
-                            Err(e) => {
-                                log_warn!("读取主题 '{}' 的截图文件失败: {}", name, e);
-                                String::new()
-                            }
-                        },
+                        // 只返回磁盘路径，由前端通过 asset 协议按需加载。
+                        // 避免把整张图片 Base64 编码后塞进 IPC 响应和 JS 堆。
+                        Ok(_) => path.to_string_lossy().into_owned(),
                         Err(e) => {
                             log_warn!("读取主题 '{}' 的截图文件信息失败: {}", name, e);
                             String::new()

@@ -35,6 +35,7 @@
                 v-if="detail.theme.screenshot_url"
                 :src="detail.theme.screenshot_url"
                 :alt="detail.theme.name"
+                decoding="async"
               />
               <div v-else class="detail-preview__placeholder">
                 <font-awesome-icon icon="image" size="3x" />

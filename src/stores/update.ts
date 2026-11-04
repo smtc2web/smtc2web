@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import { useConfigStore } from './config'
 import { hasTauri, tauriInvoke } from '@/utils'
 
 export interface UpdateCheckResult {
@@ -20,6 +21,7 @@ export interface UpdateProgress {
 }
 
 export const useUpdateStore = defineStore("update", () => {
+  const configStore = useConfigStore();
   const checking = ref(false);
   const downloading = ref(false);
   const lastResult = ref<UpdateCheckResult | null>(null);
@@ -33,7 +35,10 @@ export const useUpdateStore = defineStore("update", () => {
     downloadError.value = null;
 
     try {
-      const result = await tauriInvoke<UpdateCheckResult>("check_update");
+      // 让后端按当前界面语言选择博客更新日志：zh-* 使用中文，其余使用英文。
+      const result = await tauriInvoke<UpdateCheckResult>("check_update", {
+        locale: configStore.config.locale,
+      });
       lastResult.value = result;
       // 手动触发（如托盘菜单）时总是展示结果对话框，让用户得到明确反馈。
       if (forceDialog || result.has_update || result.error) {

@@ -1,7 +1,14 @@
 <template>
   <div class="theme-card" :class="{ active: isActive }" @click="$emit('select')">
     <div class="theme-preview">
-      <img v-if="screenshotUrl" :src="screenshotUrl" :alt="theme.name" />
+      <img
+        v-if="screenshotUrl && failedUrl !== screenshotUrl"
+        :src="screenshotUrl"
+        :alt="theme.name"
+        loading="lazy"
+        decoding="async"
+        @error="failedUrl = screenshotUrl"
+      />
       <div v-else class="preview-placeholder">
         <span class="placeholder-icon"><font-awesome-icon icon="image" /></span>
         <span>{{ t('themes.card.noPreview') }}</span>
@@ -72,6 +79,8 @@ defineEmits<{
 const isGit = computed(() => themeStore.isGitTheme(props.theme.folder_name))
 const hasUpdate = ref(false)
 const updating = ref(false)
+// 记录加载失败的截图地址：文件被删除或 asset 协议拒绝时回退到占位图。
+const failedUrl = ref<string | null>(null)
 
 onMounted(async () => {
   if (isGit.value) {
@@ -101,6 +110,9 @@ async function handleUpdate() {
   cursor: pointer;
   position: relative;
   border: 2px solid transparent;
+  /* 屏幕外的卡片跳过渲染与图片解码，长主题列表滚动时更省内存。 */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 320px;
 }
 
 .theme-card:hover {

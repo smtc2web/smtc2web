@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useConfigStore } from './config'
+import { loadLocaleMessages } from '@/i18n'
 import { hasTauri, tauriInvoke } from '@/utils'
 
 export const useLocaleStore = defineStore('locale', () => {
@@ -33,11 +34,16 @@ export const useLocaleStore = defineStore('locale', () => {
   
   
   // 初始化语言设置
-  function initLocale() {
-    // 语言设置已从后端配置加载到 configStore
-    // 直接应用即可
+  async function initLocale() {
+    // 语言设置已从后端配置加载到 configStore。
+    // main.ts 通常已经预加载过当前语言，这里只做兜底应用。
     const targetLocale = currentLocale.value
-    
+    try {
+      await loadLocaleMessages(targetLocale)
+    } catch (e) {
+      console.error(`Failed to load locale '${targetLocale}':`, e)
+    }
+
     // 同步设置语言
     i18nLocale.value = targetLocale
     
@@ -48,9 +54,17 @@ export const useLocaleStore = defineStore('locale', () => {
   }
   
   // 设置语言
-  function setLocale(code: string) {
+  async function setLocale(code: string) {
     if (!availableLocales.some(l => l.code === code)) {
       console.warn(`Unsupported locale: ${code}`)
+      return
+    }
+
+    // 语言包按需加载，加载完成后才切换，避免短暂显示 key。
+    try {
+      await loadLocaleMessages(code)
+    } catch (e) {
+      console.error(`Failed to load locale '${code}':`, e)
       return
     }
     
