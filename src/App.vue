@@ -63,10 +63,11 @@ onMounted(async () => {
 
     if (configStore.config.auto_check_update) {
         if (quickStartShown) {
+            // 引导「暂停」去商店安装主题时不算结束，等真正关闭后再检查更新。
             const stop = watch(
-                () => quickStart.visible,
-                (visible) => {
-                    if (visible) return;
+                () => quickStart.visible || quickStart.paused,
+                (active) => {
+                    if (active) return;
                     stop();
                     setTimeout(() => updateStore.checkForUpdates(), 1000);
                 },

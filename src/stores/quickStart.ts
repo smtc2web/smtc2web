@@ -20,6 +20,8 @@ function readSeen(): boolean {
 export const useQuickStartStore = defineStore("quickStart", () => {
   const visible = ref(false);
   const seen = ref(readSeen());
+  /** 「去商店安装」时暂时收起，离开商店页后自动续上，不算完成 */
+  const paused = ref(false);
 
   function markSeen() {
     seen.value = true;
@@ -38,13 +40,28 @@ export const useQuickStartStore = defineStore("quickStart", () => {
   }
 
   function open() {
+    paused.value = false;
     visible.value = true;
   }
 
   function close() {
+    paused.value = false;
     visible.value = false;
     markSeen();
   }
 
-  return { visible, maybeShowOnFirstRun, open, close };
+  /** 暂时收起引导（跳转商店安装主题），不标记为已看过 */
+  function pause() {
+    paused.value = true;
+    visible.value = false;
+  }
+
+  /** 从暂停状态恢复显示 */
+  function resume() {
+    if (!paused.value) return;
+    paused.value = false;
+    visible.value = true;
+  }
+
+  return { visible, paused, maybeShowOnFirstRun, open, close, pause, resume };
 });

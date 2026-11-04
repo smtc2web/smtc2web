@@ -143,7 +143,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import {
   DialogClose,
   DialogContent,
@@ -154,6 +154,7 @@ import {
   DialogTitle,
 } from "reka-ui";
 import { useConfigStore } from "@/stores/config";
+import { useQuickStartStore } from "@/stores/quickStart";
 import { useToastStore } from "@/stores/toast";
 import { copyText, hasTauri, tauriInvoke } from "@/utils";
 
@@ -167,7 +168,9 @@ const emit = defineEmits<{
 
 const { t } = useI18n();
 const router = useRouter();
+const route = useRoute();
 const configStore = useConfigStore();
+const quickStart = useQuickStartStore();
 const toast = useToastStore();
 
 const STEP_KEYS = ["theme", "connect", "ready"] as const;
@@ -223,17 +226,37 @@ async function handlePreview() {
 }
 
 function goStore() {
-  emit("close");
+  // 暂时收起引导去安装主题；离开商店页后自动续上，不标记为已看过。
+  quickStart.pause();
   router.push("/store");
 }
+
+// 续上上次进度时不要回到第一步
+let resuming = false;
+
+watch(
+  () => route.name,
+  (name, previous) => {
+    if (!quickStart.paused) return;
+    // 等用户离开商店页再恢复，避免刚跳转就把商店盖住。
+    if (String(previous) !== "store" || String(name) === "store") return;
+    step.value = Math.min(step.value + 1, STEP_KEYS.length - 1);
+    resuming = true;
+    quickStart.resume();
+  },
+);
 
 watch(
   () => props.visible,
   (visible) => {
     if (!visible) return;
-    step.value = 0;
     copied.value = false;
     clearCopyTimer();
+    if (resuming) {
+      resuming = false;
+      return;
+    }
+    step.value = 0;
   },
 );
 
