@@ -164,7 +164,7 @@ pub async fn start_update(app: AppHandle) -> Result<(), String> {
 ///
 /// 只接受版本号中常见的 ASCII 字符，避免把不可信内容拼进 URL 路径。
 fn blog_slug(version: &str) -> Option<String> {
-    let version = version.trim().trim_start_matches(|c| c == 'v' || c == 'V');
+    let version = version.trim().trim_start_matches(['v', 'V']);
     if version.is_empty() || version.len() > 64 {
         return None;
     }
@@ -320,7 +320,7 @@ fn append_tag_markup(tag: &str, out: &mut String) {
                 out.push('\n');
             } else {
                 ensure_blank_line(out);
-                out.push_str("▍");
+                out.push('▍');
             }
         }
         "div" | "section" | "article" | "blockquote" | "ul" | "ol" | "table" | "thead"
@@ -357,12 +357,12 @@ fn decode_entities(input: &str) -> String {
     while let Some(amp) = rest.find('&') {
         out.push_str(&rest[..amp]);
         let after = &rest[amp..];
-        if let Some(end) = after.find(';') {
-            if let Some(ch) = decode_entity(&after[1..end]) {
-                out.push(ch);
-                rest = &after[end + 1..];
-                continue;
-            }
+        if let Some(end) = after.find(';')
+            && let Some(ch) = decode_entity(&after[1..end])
+        {
+            out.push(ch);
+            rest = &after[end + 1..];
+            continue;
         }
         out.push('&');
         rest = &after[1..];
@@ -385,10 +385,9 @@ fn decode_entity(entity: &str) -> Option<char> {
                 .or_else(|| entity.strip_prefix("#X"))
             {
                 u32::from_str_radix(hex, 16).ok()?
-            } else if let Some(decimal) = entity.strip_prefix('#') {
-                decimal.parse::<u32>().ok()?
             } else {
-                return None;
+                let decimal = entity.strip_prefix('#')?;
+                decimal.parse::<u32>().ok()?
             };
             char::from_u32(code)
         }
