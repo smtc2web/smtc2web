@@ -1,6 +1,7 @@
 {
   "name": "smtc2web",
   "version": "0.7.1",
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -11,7 +12,10 @@
     "tauri:build": "tauri build",
     "crowdin:upload": "crowdin upload sources",
     "crowdin:download": "crowdin download",
-    "typecheck": "vue-tsc --noEmit"
+    "typecheck": "vue-tsc --noEmit",
+    "licenses:npm": "node scripts/generate-npm-licenses.mjs",
+    "licenses:cargo": "cargo about generate --manifest-path src-tauri/Cargo.toml --config src-tauri/about.toml src-tauri/licenses.hbs --output-file src-tauri/third-party-licenses/cargo.html",
+    "licenses:generate": "pnpm licenses:npm && pnpm licenses:cargo"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^7.2.0",

@@ -149,3 +149,29 @@ jobs:
       - name: typecheck
         run: pnpm typecheck
         working-directory: ./src-tauri/frontend
+
+  licenses:
+    name: licenses
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: "recursive"
+
+      - name: setup mise
+        uses: jdx/mise-action@v5
+
+      - name: install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: install cargo-about
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-about@0.9.3
+
+      - name: install frontend dependencies
+        run: pnpm install
+
+      # 提前暴露新依赖的未接受许可证，避免发版打包时才失败
+      - name: generate third-party license list
+        run: pnpm licenses:generate

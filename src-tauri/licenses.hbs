@@ -1,0 +1,19 @@
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>smtc2web — Third-party Rust licenses</title>
+<style>body{font-family:sans-serif;max-width:960px;margin:2rem auto;padding:0 1rem;line-height:1.5}h2{border-bottom:1px solid #ccc;padding-bottom:.2rem;margin-bottom:.5rem}pre{background:#f6f6f6;padding:1rem;overflow-x:auto;font-size:.8rem;white-space:pre-wrap}</style>
+</head>
+<body>
+<h1>smtc2web — Third-party Rust dependency licenses</h1>
+<p>This application uses the following Rust crates. Their licenses are reproduced here.</p>
+<p>Licenses used: {{#each overview}}<a href="#{{id}}">{{name}}</a> ({{count}})&nbsp;&nbsp;{{/each}}</p>
+{{#each licenses}}
+{{#each used_by}}
+<h2>{{this.crate.name}} {{this.crate.version}}</h2>
+<p>License: <strong>{{../name}} ({{../id}})</strong>{{#if this.crate.repository}}<br>Repository: {{this.crate.repository}}{{/if}}</p>
+<pre>{{../text}}</pre>
+{{/each}}
+{{/each}}
+</body>
+</html>

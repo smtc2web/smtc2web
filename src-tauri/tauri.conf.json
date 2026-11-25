@@ -7,7 +7,7 @@
     "frontendDist": "../dist",
     "devUrl": "http://localhost:5173",
     "beforeDevCommand": "pnpm dev",
-    "beforeBuildCommand": "pnpm build"
+    "beforeBuildCommand": "pnpm licenses:generate && pnpm build"
   },
   "app": {
     "withGlobalTauri": true,
@@ -39,6 +39,10 @@
     "createUpdaterArtifacts": true,
     "targets": ["nsis", "deb", "rpm", "appimage"],
     "icon": ["icons/icon.png", "icons/icon.ico"],
+    "licenseFile": "../LICENSE",
+    "license": "MIT",
+    "copyright": "Copyright (c) 2025 阿卡林刘",
+    "resources": { "../LICENSE": "LICENSE", "third-party-licenses/": "third-party-licenses/" },
     "windows": {
       "nsis": {
         "installerHooks": "installer_hooks.nsh",

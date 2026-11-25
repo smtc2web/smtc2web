@@ -59,6 +59,11 @@ jobs:
       - name: install Rust stable
         uses: dtolnay/rust-toolchain@stable
 
+      - name: install cargo-about (license list for bundle)
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-about@0.9.3
+
       - name: install target
         run: rustup target add ${{ matrix.target }}
 

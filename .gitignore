@@ -13,6 +13,9 @@ dist
 dist-ssr
 *.local
 
+# Generated third-party license lists (pnpm licenses:generate)
+src-tauri/third-party-licenses/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

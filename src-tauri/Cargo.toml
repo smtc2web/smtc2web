@@ -4,6 +4,7 @@ description = "An software can let OBS show playing media."
 edition = "2024"
 name = "smtc2web"
 version = "0.7.1"
+license = "MIT"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

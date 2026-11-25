@@ -1,0 +1,25 @@
+# cargo-about 配置：生成 Rust 依赖的第三方许可证清单
+# 许可证接受范围：仅 MIT 兼容（宽松许可证 + 文件级弱 copyleft 的 MPL-2.0）
+# 运行: cargo about generate --config about.toml licenses.hbs --output third-party-licenses/cargo.html
+accepted = [
+  "MIT",
+  "MIT-0",
+  "Apache-2.0",
+  "Apache-2.0 WITH LLVM-exception",
+  "BSD-2-Clause",
+  "BSD-3-Clause",
+  "ISC",
+  "Zlib",
+  "CC0-1.0",
+  "BSL-1.0",
+  "MPL-2.0", # 文件级弱 copyleft，仅约束 MPL 文件本身，可与 MIT 项目混合分发
+  "Unicode-3.0",
+  "Unicode-DFS-2016",
+  "CDLA-Permissive-2.0",
+  "Unlicense",
+]
+
+# 已知 crate 的许可声明修正（cargo-about 内置 workarounds 覆盖大多数，此处补充）
+# ring 部分代码源自 OpenSSL，其许可带广告条款，属特例豁免
+[ring]
+accepted = ["MIT", "ISC", "OpenSSL"]
