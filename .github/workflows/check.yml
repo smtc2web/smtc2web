@@ -172,6 +172,14 @@ jobs:
       - name: install frontend dependencies
         run: pnpm install
 
-      # 提前暴露新依赖的未接受许可证，避免发版打包时才失败
+      # 提前暴露新依赖的未接受许可证，避免发版打包时才失败；
+      # 清单文件已入库（build.rs 校验 bundle resources 路径），此处验证未过期
       - name: generate third-party license list
         run: pnpm licenses:generate
+
+      - name: verify license list is up to date
+        run: |
+          git diff --exit-code --stat -- src-tauri/third-party-licenses || {
+            echo "::error::third-party-licenses/ 与当前依赖不一致，请本地运行 pnpm licenses:generate 并提交更新后的清单"
+            exit 1
+          }
