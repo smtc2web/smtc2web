@@ -3,10 +3,40 @@ name: "Check"
 on:
   push:
     branches: ["master"]
-    paths-ignore: ["**/*.md"]
+    paths-ignore:
+      - "**/*.md"
+      - "**/*.txt"
+      - "**/*.png"
+      - "**/*.svg"
+      - "**/*.ico"
+      - "**/*.icns"
+      - "**/*.out"
+      - "**/*.jsonc"
+      - "LICENSE"
+      - ".gitignore"
+      - ".agents/**"
+      - ".vscode/**"
+      - ".github/FUNDING.yml"
+      - ".github/ISSUE_TEMPLATE/**"
+      - "notes/**"
   pull_request:
     branches: ["master"]
-    paths-ignore: ["**/*.md"]
+    paths-ignore:
+      - "**/*.md"
+      - "**/*.txt"
+      - "**/*.png"
+      - "**/*.svg"
+      - "**/*.ico"
+      - "**/*.icns"
+      - "**/*.out"
+      - "**/*.jsonc"
+      - "LICENSE"
+      - ".gitignore"
+      - ".agents/**"
+      - ".vscode/**"
+      - ".github/FUNDING.yml"
+      - ".github/ISSUE_TEMPLATE/**"
+      - "notes/**"
 
 permissions:
   contents: read
