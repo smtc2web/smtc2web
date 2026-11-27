@@ -1,0 +1,151 @@
+name: Bug 报告
+description: 报告可复现的崩溃、显示异常或功能故障
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢反馈！提交前请先搜索 [现有 Issue](https://github.com/smtc2web/smtc2web/issues)，确认问题尚未被报告。本模板可用中文或英文填写。
+
+        > 安全漏洞请勿公开提交，请按 [SECURITY.md](https://github.com/smtc2web/smtc2web/blob/master/SECURITY.md) 通过私密安全公告报告。
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: 提交前确认
+      options:
+        - label: 我已确认使用的是最新版本，并在最新版本上仍能复现
+          required: true
+        - label: 我已搜索现有 Issue，没有找到相同问题
+          required: true
+
+  - type: input
+    id: app-version
+    attributes:
+      label: smtc2web 版本
+      description: 在应用「关于」页面或安装包文件名中可以找到
+      placeholder: "例如：0.7.2"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: 操作系统
+      options:
+        - Windows 11
+        - Windows 10
+        - Linux
+        - 其他
+    validations:
+      required: true
+
+  - type: input
+    id: os-detail
+    attributes:
+      label: 系统版本与架构
+      description: Windows 请附内部版本号；Linux 请附发行版、桌面环境与架构
+      placeholder: "例如：Windows 11 23H2 x64 / Ubuntu 24.04 GNOME x86_64"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: install-method
+    attributes:
+      label: 安装方式
+      options:
+        - Windows 安装包（.exe）
+        - Debian / Ubuntu（.deb）
+        - Fedora / RHEL（.rpm）
+        - AppImage
+        - 源码自行构建
+    validations:
+      required: true
+
+  - type: dropdown
+    id: media-source
+    attributes:
+      label: 媒体来源
+      options:
+        - Windows SMTC
+        - Linux MPRIS2
+        - 不确定
+    validations:
+      required: true
+
+  - type: input
+    id: player
+    attributes:
+      label: 播放器应用
+      description: 出问题的音源应用及版本；Linux 可附上 MPRIS2 名称（`busctl --user list | grep mpris`）
+      placeholder: "例如：Spotify 1.2.63 / Firefox（org.mozilla.firefox）"
+
+  - type: input
+    id: theme
+    attributes:
+      label: 使用的主题
+      description: 默认主题无需填写；第三方主题请说明是 ZIP 还是 Git 安装，并附来源
+      placeholder: "例如：默认主题 / 某主题（Git：https://...）"
+
+  - type: input
+    id: obs-version
+    attributes:
+      label: OBS 版本（可选）
+      description: 问题出现在 OBS 浏览器源时填写
+      placeholder: "例如：OBS Studio 31.0.0"
+
+  - type: textarea
+    id: description
+    attributes:
+      label: 问题描述
+      description: 发生了什么？问题出现在应用窗口、托盘、OBS 浏览器源还是 `http://localhost:3030` 页面？
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: 复现步骤
+      description: 请尽量给出稳定复现的最少步骤
+      placeholder: |
+        1. 启动 smtc2web，确认托盘图标出现
+        2. 在 OBS 中添加浏览器源 http://localhost:3030
+        3. 播放 ...
+        4. 观察到 ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期望行为
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: 日志
+      description: |
+        按日期归档的日志位于：
+        - Windows：`%APPDATA%\smtc2web\logs\`
+        - Linux：`~/.local/share/smtc2web/logs/`
+
+        请粘贴问题发生时间段的日志，提交前删除其中的隐私信息。
+      placeholder: 将当天日志的相关片段粘贴到这里
+
+  - type: textarea
+    id: config
+    attributes:
+      label: 配置（可选）
+      description: |
+        配置文件位于 `%APPDATA%\smtc2web\config.toml`（Windows）或 `~/.config/smtc2web/config.toml`（Linux）。
+        请先移除路径、局域网地址等敏感信息。
+      placeholder: 粘贴与问题相关的配置项
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: 截图与补充信息
+      description: 可拖入截图、录屏或 OBS 日志片段
